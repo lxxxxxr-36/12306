@@ -1,0 +1,8 @@
+# Ignore compressed archives
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+*.tgz
+*.tar.gz
