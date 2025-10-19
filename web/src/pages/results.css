@@ -1,0 +1,9 @@
+:root{--brand:#0066cc}
+.results-page{max-width:1000px;margin:24px auto;padding:0 16px}
+.summary{background:#fff;padding:10px;border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.08);margin-bottom:12px}
+.filters{display:flex;gap:12px;align-items:center;margin-bottom:8px}
+.list{width:100%;background:#fff;border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.08);border-collapse:collapse}
+.list th,.list td{padding:10px;border-bottom:1px solid #eee;text-align:center}
+.list th{background:#f5f7fb;color:#555}
+.primary{background:var(--brand);color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer}
+.hint{color:#888;font-size:12px;margin-top:8px}
