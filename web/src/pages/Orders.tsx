@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Order } from '../types/order';
-import { getOrders, cancelOrder } from '../services/orders';
+import { getOrders, cancelOrder, refundOrder } from '../services/orders';
 import { useNavigate } from 'react-router-dom';
 
 const Orders: React.FC = () => {
@@ -52,6 +52,16 @@ const Orders: React.FC = () => {
                     <>
                       <button className="primary" onClick={()=>navigate(`/checkout/${o.id}`)} style={{marginRight:8}}>去支付</button>
                       <button onClick={()=>cancelOrder(o.id)}>取消</button>
+                    </>
+                  ) : o.status === 'paid' ? (
+                    <>
+                      <button onClick={()=>navigate(`/checkout/${o.id}`)} style={{marginRight:8}}>查看</button>
+                      <button onClick={()=>refundOrder(o.id)}>退票</button>
+                    </>
+                  ) : o.status === 'refunding' ? (
+                    <>
+                      <button onClick={()=>navigate(`/checkout/${o.id}`)} style={{marginRight:8}}>查看</button>
+                      <button disabled>退票处理中</button>
                     </>
                   ) : (
                     <button onClick={()=>navigate(`/checkout/${o.id}`)}>查看</button>

@@ -60,3 +60,13 @@ export function decrementInventory(trainCode: string, seatType: SeatType, amount
   t.types[seatType] = next;
   return next;
 }
+
+// 新增：退票后恢复对应席别的余票
+export function restoreInventory(trainCode: string, seatType: SeatType, amount: number = 1): number {
+  const t = ALL_TRAINS.find(x => x.code === trainCode);
+  if (!t) return 0;
+  const cur = t.types[seatType] ?? 0;
+  const next = cur + amount;
+  t.types[seatType] = next;
+  return next;
+}

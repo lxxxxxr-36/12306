@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Order } from '../types/order';
-import { getOrder, payOrder, cancelOrder } from '../services/orders';
+import { getOrder, payOrder, cancelOrder, refundOrder } from '../services/orders';
 
 const ConfirmOrder: React.FC = () => {
   const { id } = useParams();
@@ -71,6 +71,16 @@ const ConfirmOrder: React.FC = () => {
             <button className="primary" onClick={handlePay}>立即支付</button>
             <button onClick={handleCancel}>取消订单</button>
             <button onClick={()=>navigate(-1)}>返回</button>
+          </>
+        ) : order.status === 'paid' ? (
+          <>
+            <button onClick={()=>refundOrder(order.id)}>申请退票</button>
+            <button onClick={()=>navigate('/orders')}>返回订单中心</button>
+          </>
+        ) : order.status === 'refunding' ? (
+          <>
+            <button disabled>退票处理中...</button>
+            <button onClick={()=>navigate('/orders')}>返回订单中心</button>
           </>
         ) : (
           <>
