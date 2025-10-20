@@ -1,4 +1,4 @@
-import type { SearchQuery, Train } from '../types/train';
+import type { SearchQuery, Train, SeatType } from '../types/train';
 import { popularCities } from '../constants/cities';
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
@@ -21,7 +21,7 @@ function genTrain(prefix: 'G' | 'D', origin: string, dest: string, departHour: n
     ? { sw: 4, ydz: 12, edz: 60, wz: 0 }
     : { sw: 0, ydz: 0, edz: 50, wz: 8 };
   const price = prefix === 'G'
-    ? { ydz: 480, edz: 320 }
+    ? { sw: 960, ydz: 480, edz: 320 }
     : { edz: 280 };
   return { code, origin, dest, depart, arrive, duration, types, price };
 }
@@ -49,4 +49,14 @@ export async function fetchTrains(query: SearchQuery): Promise<Train[]> {
   ));
   if (query.hs) data = data.filter(t => /^G|^D/.test(t.code));
   return data;
+}
+
+// 新增：预订后扣减对应席别的余票（不低于0）
+export function decrementInventory(trainCode: string, seatType: SeatType, amount: number = 1): number {
+  const t = ALL_TRAINS.find(x => x.code === trainCode);
+  if (!t) return 0;
+  const cur = t.types[seatType] ?? 0;
+  const next = Math.max(0, cur - amount);
+  t.types[seatType] = next;
+  return next;
 }

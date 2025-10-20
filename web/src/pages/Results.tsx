@@ -1,7 +1,7 @@
 import React from 'react';
 import './results.css';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { fetchTrains } from '../services/trains';
+import { fetchTrains, decrementInventory } from '../services/trains';
 import { isLoggedIn, getSession } from '../services/auth';
 import { addOrder } from '../services/orders';
 import type { Order } from '../types/order';
@@ -44,6 +44,15 @@ function pickSeatAndPrice(train: Train): { seatType: 'sw'|'ydz'|'edz'|'wz'; pric
   const best = available.sort((a,b)=> (a.price ?? Infinity) - (b.price ?? Infinity))[0];
   return { seatType: best.type, price: best.price ?? 0 };
 }
+// 新增：选择席别的默认逻辑（仅在商务/一等/二等中选择最低价且有票）
+function defaultSelectableSeat(train: Train): 'sw'|'ydz'|'edz' {
+  const candidates: Array<'sw'|'ydz'|'edz'> = ['edz','ydz','sw'];
+  const available = candidates
+    .map(t => ({ t, avail: train.types[t] ?? 0, price: train.price[t] ?? Infinity }))
+    .filter(x => x.avail > 0)
+    .sort((a,b)=> a.price - b.price);
+  return available.length ? available[0].t : 'edz';
+}
 
 const Results: React.FC = () => {
   const { search } = useLocation();
@@ -57,6 +66,8 @@ const Results: React.FC = () => {
 
   const [sortBy, setSortBy] = React.useState<'depart'|'arrive'|'duration'|'price'>('depart');
   const [seatFilter, setSeatFilter] = React.useState<'all'|'sw'|'ydz'|'edz'|'wz'>('all');
+  // 新增：记录每个车次的所选席别（商务/一等/二等）
+  const [selectedSeats, setSelectedSeats] = React.useState<Record<string, 'sw'|'ydz'|'edz'>>({});
 
   const [data, setData] = React.useState<Train[]>([]);
   React.useEffect(()=>{
@@ -107,8 +118,39 @@ const Results: React.FC = () => {
         createdAt: Date.now(),
       };
       addOrder(order);
+      // 扣减库存：所选席别余票 - 乘客人数
+      decrementInventory(train.code, seatType as any, order.passengers.length);
       navigate(`/checkout/${order.id}`);
     }
+  };
+  // 新增：使用所选席别生成订单草稿
+  const handleBookWithSeat = (train: Train, seatType: 'sw'|'ydz'|'edz') => {
+    const totalAvail = (train.types.sw ?? 0) + (train.types.ydz ?? 0) + (train.types.edz ?? 0) + (train.types.wz ?? 0);
+    if (totalAvail <= 0) {
+      const qs = `origin=${encodeURIComponent(origin)}&dest=${encodeURIComponent(dest)}&date=${encodeURIComponent(date)}&train=${encodeURIComponent(train.code)}`;
+      navigate(`/standby?${qs}`);
+      return;
+    }
+    if (!isLoggedIn()) {
+      navigate('/login', { state: { from: '/results' } });
+      return;
+    }
+    const session = getSession();
+    const price = train.price[seatType] ?? 0;
+    const order: Order = {
+      id: 'O' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      origin,
+      dest,
+      date,
+      passengers: [{ name: session?.username || '乘客', idType: 'ID', idNo: '' }],
+      item: { trainCode: train.code, seatType, price },
+      status: 'pending',
+      createdAt: Date.now(),
+    };
+    addOrder(order);
+    // 扣减库存：所选席别余票 - 乘客人数
+    decrementInventory(train.code, seatType as any, order.passengers.length);
+    navigate(`/checkout/${order.id}`);
   };
 
   return (
@@ -150,7 +192,28 @@ const Results: React.FC = () => {
               <td>{r.types.ydz ?? '--'}</td>
               <td>{r.types.edz ?? '--'}</td>
               <td>{r.types.wz ?? '--'}</td>
-              <td><button className="primary" onClick={() => handleBook(r)}>{((r.types.sw ?? 0)+(r.types.ydz ?? 0)+(r.types.edz ?? 0)+(r.types.wz ?? 0))<=0 ? '候补' : '预订'}</button></td>
+              <td>{(((r.types.sw ?? 0)+(r.types.ydz ?? 0)+(r.types.edz ?? 0)+(r.types.wz ?? 0))<=0) ? (
+                <button className="primary" onClick={() => { const qs = `origin=${encodeURIComponent(origin)}&dest=${encodeURIComponent(dest)}&date=${encodeURIComponent(date)}&train=${encodeURIComponent(r.code)}`; navigate(`/standby?${qs}`); }}>候补</button>
+              ) : (
+                (() => {
+                  const selected = selectedSeats[r.code] ?? defaultSelectableSeat(r);
+                  const setSelected = (val: 'sw'|'ydz'|'edz') => setSelectedSeats(prev => ({ ...prev, [r.code]: val }));
+                  const swLabel = `商务座${r.price.sw? ' ￥'+r.price.sw:''}（余票${r.types.sw ?? 0}）`;
+                  const ydzLabel = `一等座${r.price.ydz? ' ￥'+r.price.ydz:''}（余票${r.types.ydz ?? 0}）`;
+                  const edzLabel = `二等座${r.price.edz? ' ￥'+r.price.edz:''}（余票${r.types.edz ?? 0}）`;
+                  const selectedAvail = (r.types as any)[selected] ?? 0;
+                  return (
+                    <span style={{display:'inline-flex', gap:8, alignItems:'center'}}>
+                      <select value={selected} onChange={e => setSelected(e.target.value as 'sw'|'ydz'|'edz')}>
+                        <option value="sw" disabled={(r.types.sw ?? 0) <= 0}>{swLabel}</option>
+                        <option value="ydz" disabled={(r.types.ydz ?? 0) <= 0}>{ydzLabel}</option>
+                        <option value="edz" disabled={(r.types.edz ?? 0) <= 0}>{edzLabel}</option>
+                      </select>
+                      <button className="primary" disabled={selectedAvail <= 0} onClick={() => handleBookWithSeat(r, selected)}>预订</button>
+                    </span>
+                  );
+                })()
+              )}</td>
             </tr>
           ))}
         </tbody>
