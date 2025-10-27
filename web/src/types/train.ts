@@ -16,4 +16,7 @@ export interface SearchQuery {
   date: string; // YYYY-MM-DD
   hs?: boolean;
   stu?: boolean;
+  // 新增：票种（单程/往返）与返程日期（往返需要）
+  ticketType?: 'oneway' | 'roundtrip';
+  returnDate?: string; // YYYY-MM-DD
 }

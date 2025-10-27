@@ -2,6 +2,7 @@ import React from 'react';
 import './home.css';
 import { useNavigate } from 'react-router-dom';
 import { popularCities } from '../constants/cities';
+import { isLoggedIn } from '../services/auth';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -10,11 +11,51 @@ const Home: React.FC = () => {
   const [date, setDate] = React.useState('');
   const [onlyHighSpeed, setOnlyHighSpeed] = React.useState(false);
   const [isStudent, setIsStudent] = React.useState(false);
+  // 新增：票种（单程/往返）与返程日期
+  const [ticketType, setTicketType] = React.useState<'oneway'|'roundtrip'>('oneway');
+  const [returnDate, setReturnDate] = React.useState('');
+  const todayLocalISO = (() => { const d = new Date(); d.setHours(0,0,0,0); const off = d.getTimezoneOffset()*60000; return new Date(d.getTime()-off).toISOString().split('T')[0]; })();
+  // 默认日期设为今天
+  React.useEffect(() => { if (!date) setDate(todayLocalISO); }, []);
+  // 登录后回填上次选择的出发地/到达地
+  React.useEffect(() => {
+    if (isLoggedIn()) {
+      const lastOrigin = localStorage.getItem('lastOrigin') || '';
+      const lastDest = localStorage.getItem('lastDest') || '';
+      if (lastOrigin) setOrigin(lastOrigin);
+      if (lastDest) setDest(lastDest);
+    }
+  }, []);
+
+  // 一键调换出发地与到达地（图标按钮）
+  const handleSwap = () => { const o = origin; const d = dest; setOrigin(d); setDest(o); };
+  // 清空选择按钮：重置出发地、到达地与日期
+  const handleClear = () => { setOrigin(''); setDest(''); setDate(todayLocalISO); };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!origin || !dest) { alert('请选择出发地与到达地'); return; }
-    navigate(`/results?origin=${encodeURIComponent(origin)}&dest=${encodeURIComponent(dest)}&date=${encodeURIComponent(date)}&hs=${onlyHighSpeed?1:0}&stu=${isStudent?1:0}`);
+    // 出发日期不得早于购票当日
+    if (!date) { alert('请选择出发日期'); return; }
+    if (date < todayLocalISO) { alert('出发日期不能早于今天'); return; }
+    if (ticketType === 'roundtrip') {
+      if (!returnDate) { alert('请选择返程日期'); return; }
+      const depart = new Date(date);
+      const back = new Date(returnDate);
+      if (!(back.getTime() > depart.getTime())) { alert('返程日期必须晚于出发日期'); return; }
+    }
+    // 持久化上次选择
+    localStorage.setItem('lastOrigin', origin);
+    localStorage.setItem('lastDest', dest);
+
+    const qs = new URLSearchParams({
+      origin, dest, date,
+      hs: onlyHighSpeed? '1':'0',
+      stu: isStudent? '1':'0',
+      ticketType,
+      ...(ticketType === 'roundtrip' ? { returnDate } : {}),
+    });
+    navigate(`/results?${qs.toString()}`);
   }
 
   return (
@@ -24,13 +65,17 @@ const Home: React.FC = () => {
         <p>官方购票·安全便捷</p>
       </div>
       <form className="search-card" onSubmit={handleSearch}>
-        <div className="row">
+        <div className="row" style={{alignItems:'flex-end', gap:8}}>
           <div className="col">
             <label>出发地</label>
             <select value={origin} onChange={e=>setOrigin(e.target.value)}>
               <option value="">请选择出发地</option>
               {popularCities.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
+          </div>
+          {/* 紧凑的图标按钮，位于同一行 */}
+          <div className="col" style={{flex:'0 0 auto', display:'flex', alignItems:'flex-end', justifyContent:'center'}}>
+            <button type="button" onClick={handleSwap} title="调换出发地与到达地" aria-label="调换出发地与到达地" style={{padding:'4px 8px', fontSize:16, lineHeight:1}}>⇄</button>
           </div>
           <div className="col">
             <label>到达地</label>
@@ -41,8 +86,26 @@ const Home: React.FC = () => {
           </div>
           <div className="col">
             <label>出发日期</label>
-            <input type="date" value={date} onChange={e=>setDate(e.target.value)} />
+            <input type="date" value={date} onChange={e=>setDate(e.target.value)} min={todayLocalISO} />
+            <div style={{marginTop:6}}>
+              <button type="button" onClick={handleClear} title="清空选择" style={{padding:'4px 8px'}}>清空选择</button>
+            </div>
           </div>
+        </div>
+        {/* 新增：票种（单程/往返）与返程日期输入 */}
+        <div className="row options" style={{alignItems:'center'}}>
+          <label style={{marginRight:12}}>
+            <input type="radio" name="ticketType" value="oneway" checked={ticketType==='oneway'} onChange={()=>setTicketType('oneway')} /> 单程
+          </label>
+          <label style={{marginRight:12}}>
+            <input type="radio" name="ticketType" value="roundtrip" checked={ticketType==='roundtrip'} onChange={()=>setTicketType('roundtrip')} /> 往返
+          </label>
+          {ticketType === 'roundtrip' && (
+            <span style={{display:'inline-flex', alignItems:'center', gap:8}}>
+              <label>返程日期</label>
+              <input type="date" value={returnDate} onChange={e=>setReturnDate(e.target.value)} min={date || undefined} />
+            </span>
+          )}
         </div>
         <div className="row options">
           <label><input type="checkbox" checked={isStudent} onChange={e=>setIsStudent(e.target.checked)} /> 学生</label>

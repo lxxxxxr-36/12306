@@ -24,4 +24,6 @@ export interface Order {
   item: OrderItem;
   status: OrderStatus;
   createdAt: number;
+  // 新增：订单分组ID，用于往返或联程（同组两笔订单）
+  groupId?: string;
 }

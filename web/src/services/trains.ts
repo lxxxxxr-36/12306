@@ -51,6 +51,11 @@ export async function fetchTrains(query: SearchQuery): Promise<Train[]> {
   return data;
 }
 
+// 新增：根据车次号获取车次（同步）
+export function getTrainByCode(trainCode: string): Train | undefined {
+  return ALL_TRAINS.find(x => x.code === trainCode);
+}
+
 // 新增：预订后扣减对应席别的余票（不低于0）
 export function decrementInventory(trainCode: string, seatType: SeatType, amount: number = 1): number {
   const t = ALL_TRAINS.find(x => x.code === trainCode);

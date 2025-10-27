@@ -1,7 +1,5 @@
 export interface LoginInput { username: string; password: string; }
 
-function isEmail(v: string){return /@/.test(v);}
-function isMobile(v: string){return /^1\d{10}$/.test(v);} // 简化的中国手机号校验
 
 export interface RegisterInput { username: string; password: string; email?: string; mobile?: string }
 export interface ResetRequest { account: string }

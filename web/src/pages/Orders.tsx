@@ -8,7 +8,7 @@ const Orders: React.FC = () => {
   const navigate = useNavigate();
   React.useEffect(()=>{
     setOrders(getOrders());
-    const handleOrdersChange = (evt: Event) => setOrders(getOrders());
+    const handleOrdersChange = () => setOrders(getOrders());
     const handleStorage = (e: StorageEvent) => { if (e.key === 'orders') setOrders(getOrders()); };
     window.addEventListener('orderschange', handleOrdersChange);
     window.addEventListener('storage', handleStorage);

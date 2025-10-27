@@ -2,6 +2,18 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Order } from '../types/order';
 import { getOrder, payOrder, cancelOrder, refundOrder } from '../services/orders';
+import { getTrainByCode } from '../services/trains';
+
+// 组合本地日期+时间为毫秒时间戳（支持+1跨天）
+function combineLocalDateTimeMs(dateStr: string, timeStr: string): number {
+  if (!dateStr || !timeStr) return 0;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const nextDay = timeStr.includes('+1');
+  const [hh, mm] = timeStr.replace('+1','').split(':').map(Number);
+  const dt = new Date(y, (m-1), d, hh, mm, 0, 0);
+  if (nextDay) dt.setDate(dt.getDate() + 1);
+  return dt.getTime();
+}
 
 const ConfirmOrder: React.FC = () => {
   const { id } = useParams();
@@ -10,8 +22,8 @@ const ConfirmOrder: React.FC = () => {
 
   React.useEffect(()=>{
     if (id) setOrder(getOrder(id));
-    const handleOrdersChange = (evt: Event) => { if (id) setOrder(getOrder(id)); };
-    const handleStorage = (e: StorageEvent) => { if (e.key === 'orders') handleOrdersChange(e as unknown as Event); };
+    const handleOrdersChange = () => { if (id) setOrder(getOrder(id)); };
+    const handleStorage = (e: StorageEvent) => { if (e.key === 'orders') handleOrdersChange(); };
     window.addEventListener('orderschange', handleOrdersChange);
     window.addEventListener('storage', handleStorage);
     return () => {
@@ -38,6 +50,14 @@ const ConfirmOrder: React.FC = () => {
   const handleCancel = () => {
     cancelOrder(order.id);
     navigate('/orders', { replace: true });
+  };
+  const train = getTrainByCode(order.item.trainCode);
+  const departMs = train ? combineLocalDateTimeMs(order.date, train.depart) : 0;
+  const canRefundNow = departMs - Date.now() >= 60 * 60 * 1000;
+  const handleRefund = () => {
+    if (!canRefundNow) { alert('距发车不足1小时，无法退票'); return; }
+    const res = refundOrder(order.id);
+    if (!res) { alert('退票失败：距发车不足1小时或订单状态不支持'); }
   };
 
   return (
@@ -74,8 +94,9 @@ const ConfirmOrder: React.FC = () => {
           </>
         ) : order.status === 'paid' ? (
           <>
-            <button onClick={()=>refundOrder(order.id)}>申请退票</button>
-            <button onClick={()=>navigate('/orders')}>返回订单中心</button>
+-            <button onClick={handleRefund} disabled={!canRefundNow}>申请退票</button>
++            <button onClick={handleRefund} disabled={!canRefundNow} title={!canRefundNow ? '距发车不足1小时，已截止退票' : undefined}>{!canRefundNow ? '已截止' : '申请退票'}</button>
+             <button onClick={()=>navigate('/orders')}>返回订单中心</button>
           </>
         ) : order.status === 'refunding' ? (
           <>
