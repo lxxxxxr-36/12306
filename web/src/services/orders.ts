@@ -95,4 +95,46 @@ export function refundOrder(id: string): Order | undefined {
   return getOrder(id);
 }
 
+// 变更到站：允许修改 dest（待支付或已支付且未发车）
+export function changeOrderDest(id: string, newDest: string): Order | undefined {
+  const order = getOrder(id);
+  if (!order) return undefined;
+  if (!newDest || newDest === order.dest) return order;
+  const train = getTrainByCode(order.item.trainCode);
+  if (order.status === 'paid' && train) {
+    const departMs = combineLocalDateTimeMs(order.date, train.depart);
+    if (departMs <= Date.now()) {
+      // 已发车不允许变更到站
+      return undefined;
+    }
+  }
+  const list = read();
+  const next = list.map<Order>(o => (o.id === id ? { ...o, dest: newDest } : o));
+  write(next);
+  dispatchOrdersChange(next);
+  return next.find(o => o.id === id);
+}
+
+// 改签（同车次同席别，仅改出发日期）：待支付或已支付且未发车
+export function rescheduleOrderDate(id: string, newDate: string): Order | undefined {
+  const order = getOrder(id);
+  if (!order) return undefined;
+  if (!newDate || newDate === order.date) return order;
+  const todayLocalISO = (() => { const d = new Date(); d.setHours(0,0,0,0); const off = d.getTimezoneOffset()*60000; return new Date(d.getTime()-off).toISOString().split('T')[0]; })();
+  if (newDate < todayLocalISO) return undefined; // 不允许改签到过去
+  const train = getTrainByCode(order.item.trainCode);
+  if (order.status === 'paid' && train) {
+    const departMs = combineLocalDateTimeMs(order.date, train.depart);
+    if (departMs <= Date.now()) {
+      // 已发车不允许改签
+      return undefined;
+    }
+  }
+  const list = read();
+  const next = list.map<Order>(o => (o.id === id ? { ...o, date: newDate } : o));
+  write(next);
+  dispatchOrdersChange(next);
+  return next.find(o => o.id === id);
+}
+
 export function clearOrders(){ write([]); dispatchOrdersChange([]); }
