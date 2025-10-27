@@ -25,135 +25,142 @@ const Orders: React.FC = () => {
   const [rescheduleOrderId, setRescheduleOrderId] = React.useState<string|null>(null);
   const [newDate, setNewDate] = React.useState('');
 
-  // 将原来的 prompt 改为内嵌控件的开启逻辑
-  const startChangeDest = (o: Order) => { setEditingDestOrderId(o.id); setNewDest(o.dest); };
-  const confirmChangeDest = () => {
+  // 城市选项按字母表（locale）排序
+  const sortedCities = React.useMemo(() => {
+    return [...popularCities].sort((a,b)=>a.localeCompare(b,'zh'));
+  }, []);
+
+  const startChangeDest = (orderId: string) => {
+    const od = orders.find(o => o.id === orderId);
+    setEditingDestOrderId(orderId);
+    setNewDest(od?.dest || '');
+  };
+  const confirmChangeDest = async () => {
     if (!editingDestOrderId) return;
+    if (!newDest) { alert('请输入新的到达地'); return; }
+    if (!sortedCities.includes(newDest)) { alert('输入的到达地不存在，请选择有效站点'); return; }
     const updated = changeOrderDest(editingDestOrderId, newDest);
-    if (!updated) alert('不满足变更到站条件（可能已发车或无效输入）');
-    setEditingDestOrderId(null); setNewDest('');
+    if (!updated) { alert('变更失败：订单不可变更或未找到'); return; }
+    setEditingDestOrderId(null);
+    setNewDest('');
   };
   const cancelChangeDest = () => { setEditingDestOrderId(null); setNewDest(''); };
 
-  const startReschedule = (o: Order) => { setRescheduleOrderId(o.id); setNewDate(o.date); };
-  const confirmReschedule = () => {
+  const startReschedule = (orderId: string) => {
+    const od = orders.find(o => o.id === orderId);
+    setRescheduleOrderId(orderId);
+    setNewDate(od?.date || todayLocalISO);
+  };
+  const confirmReschedule = async () => {
     if (!rescheduleOrderId) return;
     if (!newDate) { alert('请选择新的出发日期'); return; }
-    if (newDate < todayLocalISO) { alert('改签日期不得早于今天'); return; }
+    if (newDate < todayLocalISO) { alert('改签日期不能早于今天'); return; }
     const updated = rescheduleOrderDate(rescheduleOrderId, newDate);
-    if (!updated) alert('不满足改签条件（可能已发车或无效输入）');
-    setRescheduleOrderId(null); setNewDate('');
+    if (!updated) { alert('改签失败：订单不可改签或未找到'); return; }
+    setRescheduleOrderId(null);
+    setNewDate('');
   };
   const cancelReschedule = () => { setRescheduleOrderId(null); setNewDate(''); };
 
+  const canModify = (o: Order) => {
+    const now = Date.now();
+    const [y, m, d] = o.date.split('-').map(Number);
+    const departMs = new Date(y, m-1, d, 0, 0, 0, 0).getTime();
+    const beforeDepart = now < departMs;
+    return (o.status === 'pending' || o.status === 'paid') && beforeDepart;
+  };
+
   return (
-    <div style={{maxWidth:1000, margin:'24px auto', padding:'0 16px'}}>
-      <h2>我的订单</h2>
-      {orders.length === 0 ? (
-        <div style={{background:'#fafafa', padding:16, border:'1px solid #eee', borderRadius:8}}>
-          暂无订单。请先在查询结果页点击“预订”生成订单草稿。
-        </div>
-      ) : (
-        <table style={{width:'100%', borderCollapse:'collapse'}}>
-          <thead>
-            <tr>
-              <th style={{textAlign:'left', padding:'8px 4px'}}>订单号</th>
-              <th style={{textAlign:'left', padding:'8px 4px'}}>行程</th>
-              <th style={{textAlign:'left', padding:'8px 4px'}}>出发日期</th>
-              <th style={{textAlign:'left', padding:'8px 4px'}}>车次/席别</th>
-              <th style={{textAlign:'right', padding:'8px 4px'}}>票价</th>
-              <th style={{textAlign:'left', padding:'8px 4px'}}>状态</th>
-              <th style={{textAlign:'left', padding:'8px 4px'}}>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map(o => (
-              <tr key={o.id} style={{borderTop:'1px solid #eee'}}>
-                <td style={{padding:'8px 4px'}}>{o.id}</td>
-                <td style={{padding:'8px 4px'}}>{o.origin} → {o.dest}</td>
-                <td style={{padding:'8px 4px'}}>{o.date}</td>
-                <td style={{padding:'8px 4px'}}>{o.item.trainCode} / {labelSeat(o.item.seatType)}</td>
-                <td style={{padding:'8px 4px', textAlign:'right'}}>￥{o.item.price}</td>
-                <td style={{padding:'8px 4px'}}>{labelStatus(o.status)}</td>
-                <td style={{padding:'8px 4px'}}>
-                  {o.status === 'pending' ? (
+    <div className="orders-page">
+      <h2>订单中心</h2>
+      <table className="orders-table">
+        <thead>
+          <tr>
+            <th>订单号</th>
+            <th>行程</th>
+            <th>出发日期</th>
+            <th>乘客</th>
+            <th>金额</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map(o => (
+            <tr key={o.id}>
+              <td>{o.id}</td>
+              <td>{o.origin} → {o.dest} · {o.item.trainCode}</td>
+              <td>{o.date}</td>
+              <td>{o.passengers.map(p=>p.name||'乘客').join('、')}</td>
+              <td>{o.item.price} 元</td>
+              <td>{o.status}</td>
+              <td>
+                <div style={{display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
+                  {canModify(o) ? (
                     <>
-                      <button className="primary" onClick={()=>navigate(`/checkout/${o.id}`)} style={{marginRight:8}}>去支付</button>
-                      <button onClick={()=>cancelOrder(o.id)} style={{marginRight:8}}>取消</button>
-                      <button onClick={()=>startChangeDest(o)} style={{marginRight:8}}>变更到站</button>
-                      <button onClick={()=>startReschedule(o)}>改签</button>
-                    </>
-                  ) : o.status === 'paid' ? (
-                    <>
-                      <button onClick={()=>navigate(`/checkout/${o.id}`)} style={{marginRight:8}}>查看</button>
-                      <button onClick={()=>refundOrder(o.id)} style={{marginRight:8}}>退票</button>
-                      <button onClick={()=>startChangeDest(o)} style={{marginRight:8}}>变更到站</button>
-                      <button onClick={()=>startReschedule(o)}>改签</button>
-                    </>
-                  ) : o.status === 'refunding' ? (
-                    <>
-                      <button onClick={()=>navigate(`/checkout/${o.id}`)} style={{marginRight:8}}>查看</button>
-                      <button disabled style={{marginRight:8}}>退票处理中</button>
-                      <button disabled style={{marginRight:8}}>变更到站</button>
-                      <button disabled>改签</button>
+                      <button onClick={()=>startChangeDest(o.id)}>变更到站</button>
+                      <button onClick={()=>startReschedule(o.id)}>改签</button>
                     </>
                   ) : (
                     <>
-                      <button onClick={()=>navigate(`/checkout/${o.id}`)} style={{marginRight:8}}>查看</button>
-                      <button disabled style={{marginRight:8}}>变更到站</button>
+                      <button disabled>变更到站</button>
                       <button disabled>改签</button>
                     </>
                   )}
-
-                  {/* 内嵌编辑控件：变更到站 */}
-                  {editingDestOrderId === o.id && (
-                    <div style={{marginTop:8, display:'flex', alignItems:'center', gap:8}}>
-                      <label>新的到达地</label>
-                      <select value={newDest} onChange={e=>setNewDest(e.target.value)}>
-                        <option value="">请选择到达地</option>
-                        {popularCities.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                      <button onClick={confirmChangeDest} className="primary">确定</button>
-                      <button onClick={cancelChangeDest}>取消</button>
-                    </div>
+                  {o.status === 'pending' && (
+                    <>
+                      <button className="primary" onClick={()=>navigate(`/checkout/${o.id}`)}>去支付</button>
+                      <button onClick={()=>cancelOrder(o.id)}>取消订单</button>
+                    </>
                   )}
-
-                  {/* 内嵌编辑控件：改签日期 */}
-                  {rescheduleOrderId === o.id && (
-                    <div style={{marginTop:8, display:'flex', alignItems:'center', gap:8}}>
-                      <label>新的出发日期</label>
-                      <input type="date" value={newDate} onChange={e=>setNewDate(e.target.value)} min={todayLocalISO} />
-                      <button onClick={confirmReschedule} className="primary">确定</button>
-                      <button onClick={cancelReschedule}>取消</button>
-                    </div>
+                  {o.status === 'paid' && (
+                    <button onClick={()=>refundOrder(o.id)}>退票</button>
                   )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+                </div>
+                {/* 内嵌变更到站输入 */}
+                {editingDestOrderId === o.id && (
+                  <div style={{marginTop:8, display:'flex', gap:8, alignItems:'center'}}>
+                    <label>新的到达地：</label>
+
+                <div>
+                  <input
+                    list="change-dest-cities"
+                    value={newDest}
+                    placeholder="搜索到达地"
+                    onChange={e => setNewDest(e.target.value)}
+                    onBlur={() => {
+                      if (newDest && !sortedCities.includes(newDest)) {
+                        alert('请选择有效的到达地城市');
+                        setNewDest('');
+                      }
+                    }}
+                  />
+                  <datalist id="change-dest-cities">
+                    {sortedCities.map(c => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                </div>
+                    <button className="primary" onClick={confirmChangeDest}>确定</button>
+                    <button onClick={cancelChangeDest}>取消</button>
+                  </div>
+                )}
+                {/* 内嵌改签日期输入 */}
+                {rescheduleOrderId === o.id && (
+                  <div style={{marginTop:8, display:'flex', gap:8, alignItems:'center'}}>
+                    <label>新的出发日期：</label>
+                    <input type="date" value={newDate} onChange={e=>setNewDate(e.target.value)} min={todayLocalISO} />
+                    <button className="primary" onClick={confirmReschedule}>确定</button>
+                    <button onClick={cancelReschedule}>取消</button>
+                  </div>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
-}
-
-function labelStatus(s: Order['status']){
-  switch(s){
-    case 'pending': return '待支付';
-    case 'paid': return '已支付';
-    case 'cancelled': return '已取消';
-    case 'refunding': return '退票中';
-    default: return s;
-  }
-}
-function labelSeat(s: Order['item']['seatType']){
-  switch(s){
-    case 'sw': return '商务座';
-    case 'ydz': return '一等座';
-    case 'edz': return '二等座';
-    case 'wz': return '无座';
-    default: return s;
-  }
 }
 
 export default Orders;

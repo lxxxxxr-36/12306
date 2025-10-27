@@ -27,6 +27,11 @@ const Home: React.FC = () => {
     }
   }, []);
 
+  // 城市选项按字母表（locale）排序
+  const sortedCities = React.useMemo(() => {
+    return [...popularCities].sort((a,b)=>a.localeCompare(b,'zh'));
+  }, []);
+
   // 一键调换出发地与到达地（图标按钮）
   const handleSwap = () => { const o = origin; const d = dest; setOrigin(d); setDest(o); };
   // 清空选择按钮：重置出发地、到达地与日期
@@ -35,6 +40,9 @@ const Home: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!origin || !dest) { alert('请选择出发地与到达地'); return; }
+    // 输入必须存在于站点列表
+    if (!sortedCities.includes(origin)) { alert('输入的出发地不存在，请选择有效站点'); return; }
+    if (!sortedCities.includes(dest)) { alert('输入的到达地不存在，请选择有效站点'); return; }
     // 出发日期不得早于购票当日
     if (!date) { alert('请选择出发日期'); return; }
     if (date < todayLocalISO) { alert('出发日期不能早于今天'); return; }
@@ -65,25 +73,54 @@ const Home: React.FC = () => {
         <p>官方购票·安全便捷</p>
       </div>
       <form className="search-card" onSubmit={handleSearch}>
+
         <div className="row" style={{alignItems:'flex-end', gap:8}}>
           <div className="col">
             <label>出发地</label>
-            <select value={origin} onChange={e=>setOrigin(e.target.value)}>
-              <option value="">请选择出发地</option>
-              {popularCities.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
+            <div>
+              <input
+                list="origin-cities"
+                value={origin}
+                placeholder="搜索出发地"
+                onChange={e => setOrigin(e.target.value)}
+                onBlur={() => {
+                  if (origin && !sortedCities.includes(origin)) {
+                    alert('请选择有效的出发地城市');
+                    setOrigin('');
+                  }
+                }}
+              />
+              <datalist id="origin-cities">
+                {sortedCities.map(c => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </div>          </div>
           {/* 紧凑的图标按钮，位于同一行 */}
           <div className="col" style={{flex:'0 0 auto', display:'flex', alignItems:'flex-end', justifyContent:'center'}}>
             <button type="button" onClick={handleSwap} title="调换出发地与到达地" aria-label="调换出发地与到达地" style={{padding:'4px 8px', fontSize:16, lineHeight:1}}>⇄</button>
           </div>
           <div className="col">
             <label>到达地</label>
-            <select value={dest} onChange={e=>setDest(e.target.value)}>
-              <option value="">请选择到达地</option>
-              {popularCities.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
+            <div>
+              <input
+                list="dest-cities"
+                value={dest}
+                placeholder="搜索到达地"
+                onChange={e => setDest(e.target.value)}
+                onBlur={() => {
+                  if (dest && !sortedCities.includes(dest)) {
+                    alert('请选择有效的到达地城市');
+                    setDest('');
+                  }
+                }}
+              />
+              <datalist id="dest-cities">
+                {sortedCities.map(c => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </div>          </div>
           <div className="col">
             <label>出发日期</label>
             <input type="date" value={date} onChange={e=>setDate(e.target.value)} min={todayLocalISO} />
