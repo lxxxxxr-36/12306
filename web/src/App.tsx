@@ -27,17 +27,31 @@ function App() {
           <div className="logo">中国铁路12306</div>
           <nav>
             <NavLink to="/" end>首页</NavLink>
+            <span className="divider">|</span>
             <NavLink to="/results">查询结果</NavLink>
+            <span className="divider">|</span>
             <NavLink to="/orders">订单中心</NavLink>
+            <span className="divider">|</span>
             <NavLink to="/standby">候补购票</NavLink>
+            <span className="divider">|</span>
             <My12306Menu />
+            <span className="divider">|</span>
             {username ? (
-              <span style={{marginLeft:12}}>
-                欢迎，{username} <button className="link" onClick={handleLogout}>退出</button>
+              <span className="welcome">
+                <span className="label">您好，</span>
+                <button className="username-link" onClick={() => navigate('/my')}>{username}</button>
               </span>
             ) : (
-              <NavLink to="/login">登录</NavLink>
+              <span className="auth-group">
+                <NavLink className="auth-link" to="/login">登录</NavLink>
+                <span className="divider">|</span>
+                <NavLink className="auth-link" to="/register">注册</NavLink>
+              </span>
             )}
+            <span className="divider">|</span>
+            {username ? (
+              <button className="logout-link" onClick={handleLogout}>退出</button>
+            ) : null}
           </nav>
         </div>
       </header>

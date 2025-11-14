@@ -23,7 +23,7 @@ const My12306Menu: React.FC = () => {
   const navigate = useNavigate();
   return (
     <div className="my12306">
-      <button className="my-trigger" onClick={() => navigate('/my')}>我的12306</button>
+      <span className="my-trigger" onClick={() => navigate('/my')}>我的12306</span>
       <div className="my-dropdown">
         {items.map((it) => (
           <div key={it.label} className="my-item" onMouseDown={(e) => e.preventDefault()} onClick={() => navigate(it.path)}>
