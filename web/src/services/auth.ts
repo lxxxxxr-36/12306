@@ -1,32 +1,72 @@
 export interface LoginInput { username: string; password: string; }
 
 
-export interface RegisterInput { username: string; password: string; email?: string; mobile?: string }
+export type IdType = '居民身份证' | '港澳居民居住证' | '台湾居民居住证' | '外国人永久居留身份证' | '外国护照' | '中国护照' | '港澳居民来往内地通行证' | '台湾居民来往大陆通行证'
+export type BenefitType = '成人' | '儿童' | '学生' | '残疾军人'
+export interface RegisterInput {
+  username: string;
+  password: string;
+  confirmPassword: string;
+  idType: IdType;
+  fullName: string;
+  idNo: string;
+  benefit: BenefitType;
+  email?: string;
+  phoneCode: '+86' | '+852' | '+853' | '+886';
+  phoneNumber: string;
+}
 export interface ResetRequest { account: string }
 export interface ResetPayload { account: string; code: string; newPassword: string }
 
 // 用户库管理（localStorage，仅演示）
-type UserRecord = { username: string; password: string; email?: string; mobile?: string }
+type UserRecord = {
+  username: string;
+  password: string;
+  email?: string;
+  phoneCode: '+86' | '+852' | '+853' | '+886';
+  phoneNumber: string;
+  idType: IdType;
+  fullName: string;
+  idNo: string;
+  benefit: BenefitType;
+}
 const USERS_KEY = 'users';
 function getUsers(): UserRecord[] { try { return JSON.parse(localStorage.getItem(USERS_KEY)||'[]'); } catch { return []; } }
 function saveUsers(list: UserRecord[]) { localStorage.setItem(USERS_KEY, JSON.stringify(list)); }
 function findUser(account: string): UserRecord | undefined {
   const u = getUsers();
-  return u.find(x => x.username === account || x.email === account || x.mobile === account);
+  return u.find(x => x.username === account || x.email === account || (x.phoneCode === '+86' && x.phoneNumber === account));
 }
 
 export async function registerUser(input: RegisterInput): Promise<{ok:boolean;message?:string}> {
-  const { username, password, email, mobile } = input;
+  const { username, password, confirmPassword, idType, fullName, idNo, benefit, email, phoneCode, phoneNumber } = input;
   await new Promise(r=>setTimeout(r, 200));
-  if (!username || !/^[A-Za-z0-9_]{3,30}$/.test(username)) return { ok:false, message:'用户名需为3-30位字母数字或下划线' };
-  if (email && !/.+@.+/.test(email)) return { ok:false, message:'邮箱格式不正确' };
-  if (mobile && !/^1\d{10}$/.test(mobile)) return { ok:false, message:'手机号格式不正确' };
+  if (!username || !/^[A-Za-z][A-Za-z0-9_]{5,29}$/.test(username)) return { ok:false, message:'用户名需以字母开头，6-30位字母数字或下划线' };
   if (!password || password.length < 6) return { ok:false, message:'密码长度至少6位' };
-  const exists = findUser(username) || (email ? findUser(email) : undefined) || (mobile ? findUser(mobile) : undefined);
+  if (password !== confirmPassword) return { ok:false, message:'两次输入的密码不一致' };
+  if (!fullName || !/^[\u4e00-\u9fa5A-Za-z·\s]{2,30}$/.test(fullName)) return { ok:false, message:'姓名需为2-30位中文或字母' };
+  const idValidators: Record<IdType, RegExp> = {
+    '居民身份证': /^[1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[0-9Xx]$/,
+    '港澳居民居住证': /^[A-Za-z0-9]{8,18}$/,
+    '台湾居民居住证': /^[A-Za-z0-9]{8,18}$/,
+    '外国人永久居留身份证': /^[A-Za-z0-9]{8,18}$/,
+    '外国护照': /^[A-Za-z0-9]{5,18}$/,
+    '中国护照': /^[A-Za-z0-9]{5,18}$/,
+    '港澳居民来往内地通行证': /^[A-Za-z0-9]{8,18}$/,
+    '台湾居民来往大陆通行证': /^[A-Za-z0-9]{8,18}$/,
+  };
+  if (!idValidators[idType].test(idNo)) return { ok:false, message:'证件号码格式不正确' };
+  if (email && !/^.+@.+\..+$/.test(email)) return { ok:false, message:'邮箱格式不正确' };
+  if (!phoneNumber || !/^\d{5,20}$/.test(phoneNumber)) return { ok:false, message:'电话格式不正确' };
+  const exists = findUser(username) || (email ? findUser(email) : undefined) || ((phoneCode === '+86' ? findUser(phoneNumber) : undefined));
   if (exists) return { ok:false, message:'用户名/邮箱/手机号已存在' };
   const users = getUsers();
-  users.push({ username, password, email, mobile });
+  users.push({ username, password, email, phoneCode, phoneNumber, idType, fullName, idNo, benefit });
   saveUsers(users);
+  try {
+    const mod = await import('./passengers');
+    mod.ensureSelfPassenger(username, { fullName, idType, idNo, phoneCode, phoneNumber, benefit });
+  } catch {}
   return { ok:true };
 }
 
@@ -60,7 +100,7 @@ export async function resetPassword(payload: ResetPayload): Promise<{ok:boolean;
   if (Date.now() - data.ts > 10*60*1000) return { ok:false, message:'验证码已过期' };
   if (payload.code !== data.code) return { ok:false, message:'验证码错误' };
   const users = getUsers();
-  const idx = users.findIndex(u => u.username === payload.account || u.email === payload.account || u.mobile === payload.account);
+  const idx = users.findIndex(u => u.username === payload.account || u.email === payload.account || (u.phoneCode === '+86' && u.phoneNumber === payload.account));
   if (idx === -1) return { ok:false, message:'账号不存在' };
   users[idx].password = payload.newPassword;
   saveUsers(users);
