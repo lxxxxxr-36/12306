@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../../hooks/useSession';
-import { getPassengers, deletePassengers, deletePassenger } from '../../../services/passengers';
+import { getPassengers, deletePassengers, deletePassenger, ensureSelfPassenger } from '../../../services/passengers';
 import type { Passenger } from '../../../services/passengers';
+import { getUserByUsername } from '../../../services/auth';
 import '../../personal-center.css';
 
 function maskId(id: string){ if (id.length <= 7) return id; return id.slice(0,4)+'************'+id.slice(-3); }
@@ -9,12 +11,22 @@ function maskPhone(code: string, num: string){ if (num.length < 7) return `(${co
 
 const Passengers: React.FC = () => {
   const { username } = useSession();
+  const navigate = useNavigate();
   const [list, setList] = useState<Passenger[]>([]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [keyword, setKeyword] = useState('');
   const [query, setQuery] = useState('');
 
   useEffect(() => {
-    if (!username) return; setList(getPassengers(username));
+    if (!username) return;
+    const current = getPassengers(username);
+    if (current.length === 0) {
+      const u = getUserByUsername(username);
+      if (u) {
+        ensureSelfPassenger(username, { fullName: u.fullName, idType: u.idType, idNo: u.idNo, phoneCode: u.phoneCode, phoneNumber: u.phoneNumber, benefit: u.benefit });
+      }
+    }
+    setList(getPassengers(username));
   }, [username]);
 
   const shown = useMemo(() => {
@@ -48,12 +60,12 @@ const Passengers: React.FC = () => {
   return (
     <div>
       <div style={{display:'flex',gap:8,marginBottom:12}}>
-        <input style={{flex:'0 0 220px'}} placeholder="请输入乘客姓名" value={query} onChange={e=>setQuery(e.target.value)} />
-        <button className="link" onClick={()=>setQuery('')}>×</button>
-        <button className="primary" onClick={()=>setList(getPassengers(username!))}>查询</button>
+        <input style={{flex:'0 0 220px'}} placeholder="请输入乘客姓名" value={keyword} onChange={e=>setKeyword(e.target.value)} />
+        <button className="link" onClick={()=>{ setKeyword(''); setQuery(''); }}>×</button>
+        <button className="primary" onClick={()=>setQuery(keyword.trim())}>查询</button>
       </div>
       <div style={{display:'flex',alignItems:'center',gap:12,background:'#f1f7ff',border:'1px solid #e0efff',padding:'8px 12px',marginBottom:8}}>
-        <button style={{color:'#179d28'}} onClick={()=>{ /* 之后进入添加乘车人 */ }}>+ 添加</button>
+        <button style={{color:'#179d28'}} onClick={()=>navigate('/my/common/passengers/add')}>+ 添加</button>
         <button style={{color:'#d93025'}} onClick={bulkDelete}>🗑 批量删除</button>
       </div>
       <table style={{width:'100%',borderCollapse:'collapse'}}>
@@ -84,7 +96,7 @@ const Passengers: React.FC = () => {
                 {p.isSelf ? null : (
                   <>
                     <button title="删除" style={{color:'#d93025',marginRight:12}} onClick={()=>singleDelete(p.id)}>🗑</button>
-                    <button title="编辑" style={{color:'#1a73e8'}} onClick={()=>{}}>✎</button>
+                    <button title="编辑" style={{color:'#1a73e8'}} onClick={()=>navigate(`/my/common/passengers/edit/${p.id}`)}>✎</button>
                   </>
                 )}
               </td>

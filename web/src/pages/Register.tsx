@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import type { IdType, BenefitType } from '../services/passengers';
 import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/auth';
 import { generateCaptcha } from '../utils/captcha';
@@ -8,10 +9,10 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [idType, setIdType] = useState<'居民身份证'|'港澳居民居住证'|'台湾居民居住证'|'外国人永久居留身份证'|'外国护照'|'中国护照'|'港澳居民来往内地通行证'|'台湾居民来往大陆通行证'>('居民身份证');
+  const [idType, setIdType] = useState<IdType>('居民身份证');
   const [fullName, setFullName] = useState('');
   const [idNo, setIdNo] = useState('');
-  const [benefit, setBenefit] = useState<'成人'|'儿童'|'学生'|'残疾军人'>('成人');
+  const [benefit, setBenefit] = useState<BenefitType>('成人');
   const [phoneCode, setPhoneCode] = useState<'+86'|'+852'|'+853'|'+886'>('+86');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
@@ -62,7 +63,7 @@ const Register: React.FC = () => {
         <form className="form" onSubmit={handleSubmit}>
           <div className="form-item"><input type="text" placeholder="用户名（以字母开头，6-30位字母数字或下划线）" value={username} onChange={e=>setUsername(e.target.value)} /></div>
           <div className="form-item">
-            <select value={idType} onChange={e=>setIdType(e.target.value as any)}>
+            <select value={idType} onChange={e=>setIdType(e.target.value as IdType)}>
               <option>居民身份证</option>
               <option>港澳居民居住证</option>
               <option>台湾居民居住证</option>
@@ -76,7 +77,7 @@ const Register: React.FC = () => {
           <div className="form-item"><input type="text" placeholder="姓名" value={fullName} onChange={e=>setFullName(e.target.value)} /></div>
           <div className="form-item"><input type="text" placeholder="证件号码" value={idNo} onChange={e=>setIdNo(e.target.value)} /></div>
           <div className="form-item">
-            <select value={benefit} onChange={e=>setBenefit(e.target.value as any)}>
+            <select value={benefit} onChange={e=>setBenefit(e.target.value as BenefitType)}>
               <option>成人</option>
               <option>儿童</option>
               <option>学生</option>
@@ -85,7 +86,7 @@ const Register: React.FC = () => {
           </div>
           <div className="form-item"><input type="email" placeholder="邮箱（可选）" value={email} onChange={e=>setEmail(e.target.value)} /></div>
           <div className="form-item" style={{display:'flex',gap:8}}>
-            <select value={phoneCode} onChange={e=>setPhoneCode(e.target.value as any)}>
+            <select value={phoneCode} onChange={e=>setPhoneCode(e.target.value as ('+86'|'+852'|'+853'|'+886'))}>
               <option value='+86'>+86 中国</option>
               <option value='+852'>+852 中国香港</option>
               <option value='+853'>+853 中国澳门</option>

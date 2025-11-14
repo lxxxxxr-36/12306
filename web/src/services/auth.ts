@@ -37,6 +37,7 @@ function findUser(account: string): UserRecord | undefined {
   const u = getUsers();
   return u.find(x => x.username === account || x.email === account || (x.phoneCode === '+86' && x.phoneNumber === account));
 }
+export function getUserByUsername(username: string): UserRecord | undefined { return getUsers().find(x => x.username === username); }
 
 export async function registerUser(input: RegisterInput): Promise<{ok:boolean;message?:string}> {
   const { username, password, confirmPassword, idType, fullName, idNo, benefit, email, phoneCode, phoneNumber } = input;
@@ -45,19 +46,19 @@ export async function registerUser(input: RegisterInput): Promise<{ok:boolean;me
   if (!password || password.length < 6) return { ok:false, message:'密码长度至少6位' };
   if (password !== confirmPassword) return { ok:false, message:'两次输入的密码不一致' };
   if (!fullName || !/^[\u4e00-\u9fa5A-Za-z·\s]{2,30}$/.test(fullName)) return { ok:false, message:'姓名需为2-30位中文或字母' };
-  const idValidators: Record<IdType, RegExp> = {
-    '居民身份证': /^[1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[0-9Xx]$/,
-    '港澳居民居住证': /^[A-Za-z0-9]{8,18}$/,
-    '台湾居民居住证': /^[A-Za-z0-9]{8,18}$/,
-    '外国人永久居留身份证': /^[A-Za-z0-9]{8,18}$/,
-    '外国护照': /^[A-Za-z0-9]{5,18}$/,
-    '中国护照': /^[A-Za-z0-9]{5,18}$/,
-    '港澳居民来往内地通行证': /^[A-Za-z0-9]{8,18}$/,
-    '台湾居民来往大陆通行证': /^[A-Za-z0-9]{8,18}$/,
+  const validIdDigitCount = (t: IdType, v: string) => {
+    const c = (v.match(/\d/g) || []).length;
+    switch (t) {
+      case '居民身份证': return c >= 17 && c <= 18;
+      case '外国护照':
+      case '中国护照': return c >= 5 && c <= 18;
+      default: return c >= 8 && c <= 18;
+    }
   };
-  if (!idValidators[idType].test(idNo)) return { ok:false, message:'证件号码格式不正确' };
+  if (!validIdDigitCount(idType, idNo)) return { ok:false, message:'证件号码数字位数不符合要求' };
   if (email && !/^.+@.+\..+$/.test(email)) return { ok:false, message:'邮箱格式不正确' };
-  if (!phoneNumber || !/^\d{5,20}$/.test(phoneNumber)) return { ok:false, message:'电话格式不正确' };
+  const phoneOk = phoneCode === '+86' ? /^\d{11}$/.test(phoneNumber) : /^\d{5,20}$/.test(phoneNumber);
+  if (!phoneNumber || !phoneOk) return { ok:false, message:'电话格式不正确' };
   const exists = findUser(username) || (email ? findUser(email) : undefined) || ((phoneCode === '+86' ? findUser(phoneNumber) : undefined));
   if (exists) return { ok:false, message:'用户名/邮箱/手机号已存在' };
   const users = getUsers();
@@ -66,7 +67,7 @@ export async function registerUser(input: RegisterInput): Promise<{ok:boolean;me
   try {
     const mod = await import('./passengers');
     mod.ensureSelfPassenger(username, { fullName, idType, idNo, phoneCode, phoneNumber, benefit });
-  } catch {}
+  } catch (e) { void e; }
   return { ok:true };
 }
 

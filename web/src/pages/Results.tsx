@@ -186,7 +186,7 @@ import { popularCities } from '../constants/cities';
      };
      addOrder(order);
      // 扣减库存：所选席别余票 - 乘客人数
-     decrementInventory(train.code, seatType as any, order.passengers.length);
+    decrementInventory(train.code, seatType as import('../types/train').SeatType, order.passengers.length);
      navigate(`/checkout/${order.id}`);
    };
 // 新增：往返下单（生成两笔订单）
@@ -214,7 +214,7 @@ const handleBookRoundTrip = async (train: Train, seatType: 'sw'|'ydz'|'edz') => 
     groupId,
   };
   addOrder(orderGo);
-  decrementInventory(train.code, seatType as any, orderGo.passengers.length);
+  decrementInventory(train.code, seatType as import('../types/train').SeatType, orderGo.passengers.length);
   // 返程：选择首个有票的列车
   const retList = await fetchTrains({ origin: dest, dest: origin, date: returnDate, hs, stu });
   const retTrain = retList.find(rt => ((rt.types.sw??0)+(rt.types.ydz??0)+(rt.types.edz??0)+(rt.types.wz??0))>0);
@@ -226,13 +226,13 @@ const handleBookRoundTrip = async (train: Train, seatType: 'sw'|'ydz'|'edz') => 
       dest: origin,
       date: returnDate,
       passengers: [{ name: session?.username || '乘客', idType: 'ID', idNo: '' }],
-      item: { trainCode: retTrain.code, seatType: picked.seatType as any, price: Math.round((picked.price ?? 0) * (stu ? 0.9 : 1)) },
+      item: { trainCode: retTrain.code, seatType: picked.seatType, price: Math.round((picked.price ?? 0) * (stu ? 0.9 : 1)) },
       status: 'pending',
       createdAt: Date.now(),
       groupId,
     };
     addOrder(orderBack);
-    decrementInventory(retTrain.code, picked.seatType as any, orderBack.passengers.length);
+    decrementInventory(retTrain.code, picked.seatType as import('../types/train').SeatType, orderBack.passengers.length);
   } else {
     alert('返程暂无合适车次，已为您保留去程订单');
   }
@@ -254,26 +254,26 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
     dest: opt.mid,
     date,
     passengers: [{ name: session?.username || '乘客', idType: 'ID', idNo: '' }],
-    item: { trainCode: opt.a.code, seatType: pickA.seatType as any, price: Math.round((pickA.price ?? 0) * (stu ? 0.9 : 1)) },
+    item: { trainCode: opt.a.code, seatType: pickA.seatType, price: Math.round((pickA.price ?? 0) * (stu ? 0.9 : 1)) },
     status: 'pending',
     createdAt: Date.now(),
     groupId,
   };
   addOrder(orderA);
-  decrementInventory(opt.a.code, pickA.seatType as any, orderA.passengers.length);
+  decrementInventory(opt.a.code, pickA.seatType as import('../types/train').SeatType, orderA.passengers.length);
   const orderB: Order = {
     id: 'O' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
     origin: opt.mid,
     dest,
     date,
     passengers: [{ name: session?.username || '乘客', idType: 'ID', idNo: '' }],
-    item: { trainCode: opt.b.code, seatType: pickB.seatType as any, price: Math.round((pickB.price ?? 0) * (stu ? 0.9 : 1)) },
+    item: { trainCode: opt.b.code, seatType: pickB.seatType, price: Math.round((pickB.price ?? 0) * (stu ? 0.9 : 1)) },
     status: 'pending',
     createdAt: Date.now(),
     groupId,
   };
   addOrder(orderB);
-  decrementInventory(opt.b.code, pickB.seatType as any, orderB.passengers.length);
+  decrementInventory(opt.b.code, pickB.seatType as import('../types/train').SeatType, orderB.passengers.length);
   navigate(`/checkout/${orderA.id}`);
 };
 
@@ -283,7 +283,7 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
 +      <div className="summary">{origin || '出发地'} → {dest || '目的地'} · {date || '出发日期'} {ticketType==='roundtrip' ? `· 往返${returnDate ? '（返程 '+returnDate+'）':''}` : ''} {hs? '· 高铁动车':''} {stu? '· 学生票九折':''}</div>
        <div className="filters">
          <label>席别：
-           <select value={seatFilter} onChange={e=>setSeatFilter(e.target.value as any)}>
+           <select value={seatFilter} onChange={e=>setSeatFilter(e.target.value as ('all'|'sw'|'ydz'|'edz'|'wz'))}>
              <option value="all">全部</option>
              <option value="sw">商务座</option>
              <option value="ydz">一等座</option>
@@ -292,7 +292,7 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
            </select>
          </label>
          <label>排序：
-           <select value={sortBy} onChange={e=>setSortBy(e.target.value as any)}>
+           <select value={sortBy} onChange={e=>setSortBy(e.target.value as ('depart'|'arrive'|'duration'|'price'))}>
              <option value="depart">出发时间升序</option>
              <option value="arrive">到达时间升序</option>
              <option value="duration">历时升序</option>
@@ -329,7 +329,7 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
                    const swLabel = `商务座${r.price.sw? ' ￥'+Math.round(r.price.sw * (stu ? 0.9 : 1)):''}（余票${r.types.sw ?? 0}）`;
                    const ydzLabel = `一等座${r.price.ydz? ' ￥'+Math.round(r.price.ydz * (stu ? 0.9 : 1)):''}（余票${r.types.ydz ?? 0}）`;
                    const edzLabel = `二等座${r.price.edz? ' ￥'+Math.round(r.price.edz * (stu ? 0.9 : 1)):''}（余票${r.types.edz ?? 0}）`;
-                   const selectedAvail = (r.types as any)[selected] ?? 0;
+                   const selectedAvail = (r.types[selected] ?? 0);
                    return (
                      <span style={{display:'inline-flex', gap:8, alignItems:'center'}}>
                        <select value={selected} onChange={e => setSelected(e.target.value as 'sw'|'ydz'|'edz')}>

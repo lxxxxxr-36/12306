@@ -11,6 +11,7 @@ export type Passenger = {
   phoneNumber: string;
   benefit: BenefitType;
   verified: boolean;
+  createdAt?: string;
 };
 
 const KEY_PREFIX = 'passengers:';
@@ -37,6 +38,7 @@ export function ensureSelfPassenger(owner: string, payload: { fullName: string; 
     phoneNumber: payload.phoneNumber,
     benefit: payload.benefit,
     verified: true,
+    createdAt: existsSelf?.createdAt || new Date().toISOString().slice(0,10),
   };
   const newList = existsSelf ? list.map(x => x.isSelf ? self : x) : [self, ...list];
   savePassengers(owner, newList);
@@ -46,3 +48,29 @@ export function deletePassengers(owner: string, ids: string[]){
   savePassengers(owner, list.filter(x => !ids.includes(x.id)));
 }
 export function deletePassenger(owner: string, id: string){ deletePassengers(owner, [id]); }
+export function addPassenger(owner: string, payload: { name: string; idType: IdType; idNo: string; phoneCode: '+86'|'+852'|'+853'|'+886'; phoneNumber: string; benefit: BenefitType }){
+  const list = getPassengers(owner);
+  const p: Passenger = {
+    id: genId(),
+    owner,
+    isSelf: false,
+    name: payload.name,
+    idType: payload.idType,
+    idNo: payload.idNo,
+    phoneCode: payload.phoneCode,
+    phoneNumber: payload.phoneNumber,
+    benefit: payload.benefit,
+    verified: true,
+    createdAt: new Date().toISOString().slice(0,10),
+  };
+  savePassengers(owner, [...list, p]);
+}
+export function getPassenger(owner: string, id: string): Passenger | undefined {
+  const list = getPassengers(owner);
+  return list.find(x => x.id === id);
+}
+export function updatePassenger(owner: string, id: string, patch: Partial<Pick<Passenger, 'phoneCode'|'phoneNumber'|'benefit'>>): void {
+  const list = getPassengers(owner);
+  const next = list.map(x => x.id === id ? { ...x, ...patch } : x);
+  savePassengers(owner, next);
+}

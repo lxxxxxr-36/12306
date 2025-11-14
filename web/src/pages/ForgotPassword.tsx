@@ -27,7 +27,7 @@ const ForgotPassword: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ account, code: res.code }),
         });
-      } catch {}
+      } catch (e) { void e; }
       console.info('演示验证码已发送到终端');
     }
     setStep(2);

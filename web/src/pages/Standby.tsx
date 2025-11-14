@@ -119,7 +119,7 @@ const Standby: React.FC = () => {
           {passengers.map((p,idx)=> (
             <div key={idx} style={{display:'flex', gap:8, marginBottom:8}}>
               <input type="text" placeholder="姓名" value={p.name} onChange={e=>updatePassenger(idx,{name:e.target.value})} />
-              <select value={p.idType} onChange={e=>updatePassenger(idx, { idType: e.target.value as any })}>
+              <select value={p.idType} onChange={e=>updatePassenger(idx, { idType: e.target.value as ('ID'|'Passport') })}>
                 <option value="ID">身份证</option>
                 <option value="Passport">护照</option>
               </select>
@@ -146,7 +146,7 @@ const Standby: React.FC = () => {
               </select>
             </label>
             <label>优先级：
-              <select value={priority} onChange={e=>setPriority(e.target.value as any)}>
+              <select value={priority} onChange={e=>setPriority(e.target.value as ('time'|'price'))}>
                 <option value="time">时间优先</option>
                 <option value="price">价格优先</option>
               </select>

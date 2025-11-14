@@ -51,7 +51,8 @@ const Login: React.FC = () => {
     }
     // 登录成功，设置会话并按来源跳转
     setSession(username);
-    const from = (location.state as any)?.from || '/';
+    const state = location.state as unknown;
+    const from = (state && typeof state === 'object' && typeof (state as Record<string, unknown>).from === 'string') ? (state as Record<string, unknown>).from : '/';
     navigate(from, { replace: true });
   };
 
@@ -76,7 +77,8 @@ const Login: React.FC = () => {
         setPoller(null);
         // 模拟手机确认后，直接登录并跳转
         setSession('扫码用户');
-        const from = (location.state as any)?.from || '/';
+        const st = location.state as unknown;
+        const from = (st && typeof st === 'object' && typeof (st as Record<string, unknown>).from === 'string') ? (st as Record<string, unknown>).from : '/';
         navigate(from, { replace: true });
       }
     }, 1000);

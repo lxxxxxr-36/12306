@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Routes, Route, useNavigate } from 'react-router-dom';
 import '../personal-center.css';
 import CenterHome from './sections/CenterHome';
 import TrainOrders from './sections/TrainOrders';
@@ -20,9 +20,10 @@ import Addresses from './sections/Addresses';
 import PriorityService from './sections/PriorityService';
 import LostFound from './sections/LostFound';
 import ServiceQuery from './sections/ServiceQuery';
+import AddPassenger from './sections/AddPassenger';
+import EditPassenger from './sections/EditPassenger';
 
 const PersonalCenter: React.FC = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   return (
     <div className="pc-wrap">
@@ -67,27 +68,28 @@ const PersonalCenter: React.FC = () => {
         </div>
       </aside>
       <section className="pc-content">
-        <div className="pc-breadcrumb">当前位置：{location.pathname.startsWith('/my') ? location.pathname.replace('/my', '个人中心') : location.pathname}</div>
         <Routes>
-          <Route path="/my" element={<CenterHome />} />
-          <Route path="/my/orders/train" element={<TrainOrders />} />
-          <Route path="/my/orders/waitlist" element={<WaitlistOrders />} />
-          <Route path="/my/orders/timescard" element={<TimesCardOrders />} />
-          <Route path="/my/orders/appointment" element={<AppointmentOrders />} />
-          <Route path="/my/orders/ski" element={<SkiExpressOrders />} />
-          <Route path="/my/orders/food" element={<FoodOrders />} />
-          <Route path="/my/orders/insurance" element={<InsuranceOrders />} />
-          <Route path="/my/orders/invoice" element={<InvoicePage />} />
-          <Route path="/my/ticket" element={<MyTicket />} />
-          <Route path="/my/profile/view" element={<ProfileView />} />
-          <Route path="/my/profile/security" element={<ProfileSecurity />} />
-          <Route path="/my/profile/mobile" element={<MobileVerify />} />
-          <Route path="/my/profile/delete" element={<AccountDelete />} />
-          <Route path="/my/common/passengers" element={<Passengers />} />
-          <Route path="/my/common/addresses" element={<Addresses />} />
-          <Route path="/my/service/priority" element={<PriorityService />} />
-          <Route path="/my/service/lost" element={<LostFound />} />
-          <Route path="/my/service/query" element={<ServiceQuery />} />
+          <Route index element={<CenterHome />} />
+          <Route path="orders/train" element={<TrainOrders />} />
+          <Route path="orders/waitlist" element={<WaitlistOrders />} />
+          <Route path="orders/timescard" element={<TimesCardOrders />} />
+          <Route path="orders/appointment" element={<AppointmentOrders />} />
+          <Route path="orders/ski" element={<SkiExpressOrders />} />
+          <Route path="orders/food" element={<FoodOrders />} />
+          <Route path="orders/insurance" element={<InsuranceOrders />} />
+          <Route path="orders/invoice" element={<InvoicePage />} />
+          <Route path="ticket" element={<MyTicket />} />
+          <Route path="profile/view" element={<ProfileView />} />
+          <Route path="profile/security" element={<ProfileSecurity />} />
+          <Route path="profile/mobile" element={<MobileVerify />} />
+          <Route path="profile/delete" element={<AccountDelete />} />
+          <Route path="common/passengers" element={<Passengers />} />
+          <Route path="common/passengers/add" element={<AddPassenger />} />
+          <Route path="common/passengers/edit/:id" element={<EditPassenger />} />
+          <Route path="common/addresses" element={<Addresses />} />
+          <Route path="service/priority" element={<PriorityService />} />
+          <Route path="service/lost" element={<LostFound />} />
+          <Route path="service/query" element={<ServiceQuery />} />
         </Routes>
       </section>
     </div>
