@@ -16,6 +16,7 @@ const Passengers: React.FC = () => {
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [keyword, setKeyword] = useState('');
   const [query, setQuery] = useState('');
+  const [modal, setModal] = useState<{ visible: boolean; title: string; text: string; confirm?: () => void } | null>(null);
 
   useEffect(() => {
     if (!username) return;
@@ -42,19 +43,23 @@ const Passengers: React.FC = () => {
 
   const bulkDelete = () => {
     const ids = Object.keys(selected).filter(id => selected[id]);
-    if (ids.length === 0) { alert('请先选择联系人'); return; }
-    if (!confirm('您确定要删除选中的乘车人吗？')) return;
-    if (!username) return;
-    deletePassengers(username, ids);
-    setList(getPassengers(username));
-    clearSelection();
+    if (ids.length === 0) { setModal({ visible: true, title: '删除乘车人', text: '请先选择联系人' }); return; }
+    setModal({ visible: true, title: '删除乘车人', text: '您确定要删除选中的乘车人吗？', confirm: () => {
+      if (!username) { setModal(null); return; }
+      deletePassengers(username, ids);
+      setList(getPassengers(username));
+      clearSelection();
+      setModal({ visible: true, title: '删除乘车人', text: '删除成功' });
+    }});
   };
   const singleDelete = (id: string) => {
-    if (!confirm('您确定要删除选中的乘车人吗？')) return;
-    if (!username) return;
-    deletePassenger(username, id);
-    setList(getPassengers(username));
-    setSelected(s => { const n = { ...s }; delete n[id]; return n; });
+    setModal({ visible: true, title: '删除乘车人', text: '您确定要删除选中的乘车人吗？', confirm: () => {
+      if (!username) { setModal(null); return; }
+      deletePassenger(username, id);
+      setList(getPassengers(username));
+      setSelected(s => { const n = { ...s }; delete n[id]; return n; });
+      setModal({ visible: true, title: '删除乘车人', text: '删除成功' });
+    }});
   };
 
   return (
@@ -104,6 +109,24 @@ const Passengers: React.FC = () => {
           ))}
         </tbody>
       </table>
+      {modal?.visible && (
+        <div style={{position:'fixed', left:0, top:0, right:0, bottom:0, background:'rgba(0,0,0,0.3)', display:'flex', alignItems:'center', justifyContent:'center'}}>
+          <div style={{width:360, background:'#fff', borderRadius:4}}>
+            <div style={{background:'#2ea5ff', color:'#fff', padding:'10px 12px'}}>{modal.title}</div>
+            <div style={{padding:'16px 12px'}}>{modal.text}</div>
+            <div style={{padding:'10px 12px', textAlign:'center', display:'flex', justifyContent:'center', gap:12}}>
+              {modal.confirm ? (
+                <>
+                  <button onClick={()=>setModal(null)}>取消</button>
+                  <button className="primary" onClick={()=>{ const fn = modal.confirm; setModal(null); fn && fn(); }}>确定</button>
+                </>
+              ) : (
+                <button className="primary" onClick={()=>setModal(null)}>确定</button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

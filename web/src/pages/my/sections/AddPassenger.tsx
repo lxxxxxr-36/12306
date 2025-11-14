@@ -17,6 +17,7 @@ const AddPassenger: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [benefit, setBenefit] = useState<BenefitType>('成人');
   const [error, setError] = useState('');
+  const [okVisible, setOkVisible] = useState(false);
 
   const save = () => {
     setError('');
@@ -36,7 +37,7 @@ const AddPassenger: React.FC = () => {
       phoneNumber,
       benefit,
     });
-    navigate('/my/common/passengers');
+    setOkVisible(true);
   };
 
   return (
@@ -79,6 +80,17 @@ const AddPassenger: React.FC = () => {
         <button onClick={()=>navigate('/my/common/passengers')}>取消</button>
         <button className="primary" onClick={save}>保存</button>
       </div>
+      {okVisible && (
+        <div style={{position:'fixed', left:0, top:0, right:0, bottom:0, background:'rgba(0,0,0,0.3)', display:'flex', alignItems:'center', justifyContent:'center'}}>
+          <div style={{width:360, background:'#fff', borderRadius:4}}>
+            <div style={{background:'#2ea5ff', color:'#fff', padding:'10px 12px'}}>添加乘车人</div>
+            <div style={{padding:'16px 12px'}}>添加成功</div>
+            <div style={{padding:'10px 12px', textAlign:'center'}}>
+              <button className="primary" onClick={()=>{ setOkVisible(false); navigate('/my/common/passengers'); }}>确定</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

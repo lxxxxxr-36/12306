@@ -38,6 +38,35 @@ function findUser(account: string): UserRecord | undefined {
   return u.find(x => x.username === account || x.email === account || (x.phoneCode === '+86' && x.phoneNumber === account));
 }
 export function getUserByUsername(username: string): UserRecord | undefined { return getUsers().find(x => x.username === username); }
+export async function updateUserInfo(username: string, patch: Partial<{ email: string; phoneCode: '+86' | '+852' | '+853' | '+886'; phoneNumber: string; benefit: BenefitType }>): Promise<{ok:boolean;message?:string}> {
+  await new Promise(r=>setTimeout(r, 150));
+  const users = getUsers();
+  const idx = users.findIndex(u => u.username === username);
+  if (idx === -1) return { ok:false, message:'用户不存在' };
+  const next = { ...users[idx] } as UserRecord;
+  if (typeof patch.email === 'string') {
+    if (patch.email && !/^.+@.+\..+$/.test(patch.email)) return { ok:false, message:'邮箱格式不正确' };
+    next.email = patch.email || undefined;
+  }
+  if (typeof patch.phoneCode === 'string' || typeof patch.phoneNumber === 'string') {
+    const code = (patch.phoneCode ?? next.phoneCode);
+    const num = (patch.phoneNumber ?? next.phoneNumber);
+    const phoneOk = code === '+86' ? /^\d{11}$/.test(num) : /^\d{5,20}$/.test(num);
+    if (!num || !phoneOk) return { ok:false, message:'电话格式不正确' };
+    next.phoneCode = code;
+    next.phoneNumber = num;
+  }
+  if (typeof patch.benefit === 'string') {
+    next.benefit = patch.benefit as BenefitType;
+  }
+  users[idx] = next;
+  saveUsers(users);
+  try {
+    const mod = await import('./passengers');
+    mod.ensureSelfPassenger(username, { fullName: next.fullName, idType: next.idType, idNo: next.idNo, phoneCode: next.phoneCode, phoneNumber: next.phoneNumber, benefit: next.benefit });
+  } catch (e) { void e; }
+  return { ok:true };
+}
 
 export async function registerUser(input: RegisterInput): Promise<{ok:boolean;message?:string}> {
   const { username, password, confirmPassword, idType, fullName, idNo, benefit, email, phoneCode, phoneNumber } = input;
