@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Results from './pages/Results'
 import Orders from './pages/Orders'
 import ProtectedRoute from './components/ProtectedRoute'
+import My12306Menu from './components/My12306Menu'
 import NotFound from './pages/NotFound'
 import Standby from './pages/Standby'
 import Register from './pages/Register'
@@ -12,6 +13,8 @@ import ForgotPassword from './pages/ForgotPassword'
 import { useSession } from './hooks/useSession'
 import { logout } from './services/auth'
 import ConfirmOrder from './pages/ConfirmOrder'
+import PersonalCenter from './pages/my/PersonalCenter'
+import MemberCenter from './pages/my/MemberCenter'
 
 function App() {
   const { username } = useSession();
@@ -27,6 +30,7 @@ function App() {
             <NavLink to="/results">查询结果</NavLink>
             <NavLink to="/orders">订单中心</NavLink>
             <NavLink to="/standby">候补购票</NavLink>
+            <My12306Menu />
             {username ? (
               <span style={{marginLeft:12}}>
                 欢迎，{username} <button className="link" onClick={handleLogout}>退出</button>
@@ -47,6 +51,8 @@ function App() {
           <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
           <Route path="/checkout/:id" element={<ProtectedRoute><ConfirmOrder /></ProtectedRoute>} />
           <Route path="/standby" element={<Standby />} />
+          <Route path="/my/*" element={<ProtectedRoute><PersonalCenter /></ProtectedRoute>} />
+          <Route path="/member" element={<ProtectedRoute><MemberCenter /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

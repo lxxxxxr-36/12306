@@ -1,0 +1,10 @@
+.pc-wrap { display: flex; gap: 24px; }
+.pc-side { width: 220px; border-right: 1px solid #eaeaea; padding-right: 16px; }
+.pc-side .group { margin-bottom: 16px; }
+.pc-side .group-title { font-weight: 700; margin-bottom: 8px; }
+.pc-side .group-title.link { cursor: pointer; display: block; }
+.pc-side .group-title.link.active { color: var(--brand); }
+.pc-side .link { display: block; padding: 6px 0; color: #333; }
+.pc-side .link.active { color: var(--brand); }
+.pc-content { flex: 1; background: #fff; border: 1px solid #eaeaea; padding: 16px; }
+.pc-breadcrumb { margin-bottom: 12px; color: #666; }

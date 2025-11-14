@@ -4,5 +4,13 @@
 .site-header nav a { margin-right: 16px; color: #333; }
 .site-header nav a.active { color: var(--brand); font-weight: 600; }
 
+.my12306 { position: relative; display: inline-block; margin-right: 12px; }
+.my12306 .my-trigger { background: transparent; border: none; color: #333; cursor: pointer; font-size: 14px; }
+.my12306 .my-trigger:hover { color: var(--brand); }
+.my12306 .my-dropdown { display: none; position: absolute; left: 0; top: 24px; width: 180px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 1px solid #eaeaea; z-index: 10; }
+.my12306:hover .my-dropdown { display: block; }
+.my12306 .my-item { padding: 10px 12px; font-size: 14px; color: #333; cursor: pointer; }
+.my12306 .my-item:hover { background: #f6f8fa; color: var(--brand); }
+
 main { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
 .site-footer { text-align: center; color: #666; padding: 24px 0; border-top: 1px solid #eaeaea; background: #fff; }
