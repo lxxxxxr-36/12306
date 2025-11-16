@@ -3,33 +3,59 @@ import { useLocation, NavLink, useNavigate } from 'react-router-dom';
 import { isLoggedIn } from '../services/auth';
 import { createStandby, checkStandbyStatus, cancelStandby } from '../services/standby';
 import { fetchTrains } from '../services/trains';
+import { popularCities } from '../constants/cities';
 import type { SeatType } from '../types/train';
 import type { Passenger } from '../types/order';
 
 const seatLabels: Record<SeatType, string> = { sw:'商务座', ydz:'一等座', edz:'二等座', wz:'无座' };
 
+// 与购票页一致的日期/时间工具
+function todayLocalISO() {
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  const off = d.getTimezoneOffset()*60000;
+  return new Date(d.getTime()-off).toISOString().split('T')[0];
+}
+function combineLocalDateTimeMs(dateStr: string, timeStr: string): number {
+  if (!dateStr || !timeStr) return 0;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const nextDay = timeStr.includes('+1');
+  const [hh, mm] = timeStr.replace('+1','').split(':').map(Number);
+  const dt = new Date(y, (m-1), d, hh, mm, 0, 0);
+  if (nextDay) dt.setDate(dt.getDate() + 1);
+  return dt.getTime();
+}
+
 const Standby: React.FC = () => {
   const { search } = useLocation();
   const navigate = useNavigate();
   const params = new URLSearchParams(search);
-  const origin = params.get('origin') || '';
-  const dest = params.get('dest') || '';
+  const originParam = params.get('origin') || '';
+  const destParam = params.get('dest') || '';
   const dateParam = params.get('date') || '';
   const trainParam = params.get('train') || '';
 
   // 可选日期与车次
-  const [dateVal, setDateVal] = useState<string>(dateParam);
+  const [originVal, setOriginVal] = useState<string>(originParam);
+  const [destVal, setDestVal] = useState<string>(destParam);
+  // 初始化日期：若传入日期早于今天，则校正为今天
+  const [dateVal, setDateVal] = useState<string>(dateParam && dateParam >= todayLocalISO() ? dateParam : todayLocalISO());
   const [trainCode, setTrainCode] = useState<string>(trainParam);
   const [trainList, setTrainList] = useState<{code:string; depart:string; arrive:string}[]>([]);
   const [loadingTrains, setLoadingTrains] = useState(false);
 
+  // 购票同逻辑：日期不可早于今天
+  const isDepartValidToday = useMemo(() => !!dateVal && dateVal >= todayLocalISO(), [dateVal]);
+
   useEffect(() => {
+    // 必须选择出发地与目的地后再加载车次
+    if (!originVal || !destVal) { setTrainList([]); return; }
     setLoadingTrains(true);
-    fetchTrains({ origin, dest, date: dateVal }).then(res => {
+    fetchTrains({ origin: originVal, dest: destVal, date: dateVal }).then(res => {
       setTrainList(res.map(t => ({ code: t.code, depart: t.depart, arrive: t.arrive })));
       if (!trainCode && res.length > 0) setTrainCode(res[0].code);
     }).finally(() => setLoadingTrains(false));
-  }, [origin, dest, dateVal]);
+  }, [originVal, destVal, dateVal]);
 
   // 乘客与偏好
   const [passengers, setPassengers] = useState<Passenger[]>([{ name:'', idType:'ID', idNo:'' }]);
@@ -52,15 +78,24 @@ const Standby: React.FC = () => {
     e.preventDefault();
     // 登录校验
     if (!isLoggedIn()) {
-      navigate('/login', { state: { from: `/standby?origin=${encodeURIComponent(origin)}&dest=${encodeURIComponent(dest)}&date=${encodeURIComponent(dateVal)}&train=${encodeURIComponent(trainCode)}` } });
+      navigate('/login', { state: { from: `/standby?origin=${encodeURIComponent(originVal)}&dest=${encodeURIComponent(destVal)}&date=${encodeURIComponent(dateVal)}&train=${encodeURIComponent(trainCode)}` } });
       return;
     }
     // 基础校验
+    if (!originVal || !destVal) { alert('请选择出发地与目的地'); return; }
+    if (originVal === destVal) { alert('出发地与目的地不能相同'); return; }
     if (!dateVal) { alert('请选择出发日期'); return; }
+    if (!isDepartValidToday) { alert('出发日期不能早于今天'); return; }
     if (!trainCode) { alert('请选择候补车次'); return; }
+    // 购票同逻辑：距发车不足30分钟，截止候补提交
+    const sel = trainList.find(t => t.code === trainCode);
+    if (sel) {
+      const departMs = combineLocalDateTimeMs(dateVal, sel.depart);
+      if (departMs - Date.now() < 30 * 60 * 1000) { alert('距发车不足30分钟，已截止候补'); return; }
+    }
     if (passengers.length === 0 || passengers.some(p => !p.name || !p.idNo)) { alert('请填写乘客姓名与证件号'); return; }
     if (seatPrefs.length === 0) { alert('请至少选择一个席别偏好'); return; }
-    const req = createStandby({ origin, dest, date: dateVal, trainCode, passengers, seatPrefs, deadlineMinutes: deadline, priority, deposit });
+    const req = createStandby({ origin: originVal, dest: destVal, date: dateVal, trainCode, passengers, seatPrefs, deadlineMinutes: deadline, priority, deposit });
     setStandbyId(req.id);
     setStatus(req.status);
   };
@@ -91,9 +126,25 @@ const Standby: React.FC = () => {
       <h2 style={{color:'var(--brand)'}}>候补购票</h2>
       <p>当所选车次或席别无票时，可发起候补申请。系统将为您在有退票或新增放票时自动分配。</p>
       <div style={{marginTop:12, padding:12, background:'#f7faff', border:'1px solid #e1efff'}}>
-        <div>行程：{origin} → {dest}</div>
-        <div>日期：{dateVal || '请选择日期'}</div>
-        <div>车次：{trainCode || '请选择车次'}</div>
+        <div style={{display:'flex', alignItems:'center', gap:12, flexWrap:'wrap'}}>
+          <label style={{display:'inline-flex', alignItems:'center', gap:6}}>出发地：
+            <select value={originVal} onChange={e=>setOriginVal(e.target.value)}>
+              <option value="">请选择城市</option>
+              {popularCities.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </label>
+          <span>→</span>
+          <label style={{display:'inline-flex', alignItems:'center', gap:6}}>目的地：
+            <select value={destVal} onChange={e=>setDestVal(e.target.value)}>
+              <option value="">请选择城市</option>
+              {popularCities.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </label>
+          <label style={{display:'inline-flex', alignItems:'center', gap:6}}>日期：
+            <input type="date" value={dateVal} min={todayLocalISO()} onChange={e=>setDateVal(e.target.value)} />
+          </label>
+        </div>
+        {/* 此处不显示车次，车次选择在下方区域 */}
       </div>
 
       {!standbyId && (
@@ -101,7 +152,7 @@ const Standby: React.FC = () => {
           <h3>选择出发日期与车次</h3>
           <div style={{display:'flex', gap:16, alignItems:'center'}}>
             <label>出发日期：
-              <input type="date" value={dateVal} onChange={e=>setDateVal(e.target.value)} />
+              <input type="date" value={dateVal} min={todayLocalISO()} onChange={e=>setDateVal(e.target.value)} />
             </label>
             <label>候补车次：
               <select value={trainCode} onChange={e=>setTrainCode(e.target.value)}>

@@ -34,6 +34,11 @@ function generateAllTrains(): Train[] {
       // 为每一对城市生成两趟列车（G/D），双向覆盖
       out.push(genTrain('G', a, b, 7 + ((i + j) % 8))); // 07:00 - 14:30 之间
       out.push(genTrain('D', a, b, 9 + ((i + j) % 8))); // 09:15 - 18:45 之间
+
+      // 新增：保证24小时每小时都有出发车次（G，高铁），0-23点各一班
+      for (let h = 0; h < 24; h++) {
+        out.push(genTrain('G', a, b, h));
+      }
     });
   });
   return out;

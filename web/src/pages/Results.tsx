@@ -28,6 +28,10 @@ import { popularCities } from '../constants/cities';
  function lowestPrice(p: Train['price']) {
    return Math.min(...Object.values(p).map(v => v ?? Infinity));
  }
+ // 汇总余票总数（商务/一等/二等/无座）
+ function totalAvail(t: Train) {
+   return (t.types.sw ?? 0) + (t.types.ydz ?? 0) + (t.types.edz ?? 0) + (t.types.wz ?? 0);
+ }
  function isHighSpeed(code: string) {
    return /^G|^D/.test(code);
  }
@@ -99,6 +103,10 @@ import { popularCities } from '../constants/cities';
    const [showTransfer, setShowTransfer] = React.useState(false);
    const [transferOptions, setTransferOptions] = React.useState<Array<{ mid: string; a: Train; b: Train }>>([]);
    const [loadingTransfer, setLoadingTransfer] = React.useState(false);
+  // 新增：更贴近12306的筛选项
+  const [onlyAvailable, setOnlyAvailable] = React.useState(false);
+  const [departSlot, setDepartSlot] = React.useState<'all'|'0-6'|'6-12'|'12-18'|'18-24'>('all');
+  const [typeFilter, setTypeFilter] = React.useState<{G:boolean; D:boolean}>({ G: true, D: true });
 
    const [data, setData] = React.useState<Train[]>([]);
    React.useEffect(()=>{
@@ -136,13 +144,40 @@ import { popularCities } from '../constants/cities';
      return () => { cancelled = true; };
    }, [showTransfer, origin, dest, date, hs, stu]);
 
-   const filtered = React.useMemo(() => {
-     let dataSrc = [...data];
-     if (hs) dataSrc = dataSrc.filter(d => isHighSpeed(d.code));
-     if (seatFilter !== 'all') dataSrc = dataSrc.filter(d => (d.types[seatFilter] ?? 0) > 0);
-     if (stu) dataSrc = dataSrc.sort((a, b) => (a.types.edz ?? 0) > (b.types.edz ?? 0) ? -1 : 1);
-     return dataSrc;
-   }, [data, hs, seatFilter, stu]);
+  const filtered = React.useMemo(() => {
+    let dataSrc = [...data];
+    if (hs) dataSrc = dataSrc.filter(d => isHighSpeed(d.code));
+    if (seatFilter !== 'all') dataSrc = dataSrc.filter(d => (d.types[seatFilter] ?? 0) > 0);
+    // 仅看有票：同时剔除已截止售票的车次（距发车不足30分钟）
+    if (onlyAvailable) {
+      const now = Date.now();
+      dataSrc = dataSrc.filter(d => {
+        const hasTickets = totalAvail(d) > 0;
+        const isCutoff = (combineLocalDateTimeMs(date, d.depart) - now) < 30 * 60 * 1000;
+        return hasTickets && !isCutoff;
+      });
+    }
+    // 出发时段筛选
+    if (departSlot !== 'all') {
+      const range = {
+        '0-6': [0, 6*60],
+        '6-12': [6*60, 12*60],
+        '12-18': [12*60, 18*60],
+        '18-24': [18*60, 24*60],
+      }[departSlot];
+      dataSrc = dataSrc.filter(d => {
+        const m = timeToMinutes(d.depart) % (24*60);
+        return m >= (range as [number, number])[0] && m < (range as [number, number])[1];
+      });
+    }
+    // 车次类型筛选（G/D）
+    const activeTypes = Object.entries(typeFilter).filter(([,v])=>v).map(([k])=>k);
+    if (activeTypes.length > 0 && activeTypes.length < 2) {
+      dataSrc = dataSrc.filter(d => activeTypes.includes(d.code[0]));
+    }
+    if (stu) dataSrc = dataSrc.sort((a, b) => (a.types.edz ?? 0) > (b.types.edz ?? 0) ? -1 : 1);
+    return dataSrc;
+  }, [data, hs, seatFilter, onlyAvailable, departSlot, typeFilter, stu]);
 
    const sorted = React.useMemo(() => {
      return [...filtered].sort((a, b) => {
@@ -279,8 +314,7 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
 
    return (
      <div className="results-page">
--      <div className="summary">{origin || '出发地'} → {dest || '目的地'} · {date || '出发日期'} {hs? '· 高铁动车':''} {stu? '· 学生':''}</div>
-+      <div className="summary">{origin || '出发地'} → {dest || '目的地'} · {date || '出发日期'} {ticketType==='roundtrip' ? `· 往返${returnDate ? '（返程 '+returnDate+'）':''}` : ''} {hs? '· 高铁动车':''} {stu? '· 学生票九折':''}</div>
+       <div className="summary">{origin || '出发地'} → {dest || '目的地'} · {date || '出发日期'} {ticketType==='roundtrip' ? `· 往返${returnDate ? '（返程 '+returnDate+'）':''}` : ''} {hs? '· 高铁动车':''} {stu? '· 学生票九折':''}</div>
        <div className="filters">
          <label>席别：
            <select value={seatFilter} onChange={e=>setSeatFilter(e.target.value as ('all'|'sw'|'ydz'|'edz'|'wz'))}>
@@ -297,12 +331,30 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
              <option value="arrive">到达时间升序</option>
              <option value="duration">历时升序</option>
              <option value="price">价格最低</option>
-           </select>
-         </label>
-+        <label style={{marginLeft:12}}>
-+          <input type="checkbox" checked={showTransfer} onChange={e=>setShowTransfer(e.target.checked)} /> 显示中转换乘
-+        </label>
-       </div>
+         </select>
+        </label>
+        <label style={{marginLeft:12}}>
+          时段：
+          <select value={departSlot} onChange={e=>setDepartSlot(e.target.value as ('all'|'0-6'|'6-12'|'12-18'|'18-24'))}>
+            <option value="all">全天</option>
+            <option value="0-6">00:00 - 06:00</option>
+            <option value="6-12">06:00 - 12:00</option>
+            <option value="12-18">12:00 - 18:00</option>
+            <option value="18-24">18:00 - 24:00</option>
+          </select>
+        </label>
+        <span style={{marginLeft:12}}>
+          车次类型：
+          <label className="chip"><input type="checkbox" checked={typeFilter.G} onChange={e=>setTypeFilter(p=>({ ...p, G: e.target.checked }))} /><span>G高铁</span></label>
+          <label className="chip"><input type="checkbox" checked={typeFilter.D} onChange={e=>setTypeFilter(p=>({ ...p, D: e.target.checked }))} /><span>D动车</span></label>
+        </span>
+        <label className="chip" style={{marginLeft:12}}>
+          <input type="checkbox" checked={onlyAvailable} onChange={e=>setOnlyAvailable(e.target.checked)} /><span>仅看有票</span>
+        </label>
+        <label className="chip" style={{marginLeft:12}}>
+          <input type="checkbox" checked={showTransfer} onChange={e=>setShowTransfer(e.target.checked)} /><span>显示中转换乘</span>
+        </label>
+      </div>
 
        <table className="list">
          <thead>
