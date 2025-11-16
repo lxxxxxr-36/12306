@@ -55,7 +55,10 @@ const Addresses: React.FC = () => {
   const resetForm = () => {
     setProvince(''); setCity(''); setDistrict(''); setTown(''); setArea(''); setDetail(''); setReceiver(''); setPhone(''); setIsDefault(false); setError(''); setRuleHover(false);
   };
-  const openAdd = () => { setEditingId(null); resetForm(); setMode('form'); };
+  const openAdd = () => {
+    if (list.length >= 20) { setModal({ visible: true, title: '添加地址', text: '最多添加20个地址' }); return; }
+    setEditingId(null); resetForm(); setMode('form');
+  };
   const openEdit = (id: string) => {
     const rec = list.find(x => x.id === id); if (!rec) return;
     setEditingId(id);
