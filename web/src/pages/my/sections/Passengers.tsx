@@ -118,7 +118,7 @@ const Passengers: React.FC = () => {
               {modal.confirm ? (
                 <>
                   <button onClick={()=>setModal(null)}>取消</button>
-                  <button className="primary" onClick={()=>{ const fn = modal.confirm; setModal(null); fn && fn(); }}>确定</button>
+                  <button className="primary" onClick={()=>{ const fn = modal.confirm; setModal(null); if (fn) fn(); }}>确定</button>
                 </>
               ) : (
                 <button className="primary" onClick={()=>setModal(null)}>确定</button>
