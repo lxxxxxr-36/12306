@@ -9,13 +9,14 @@ body{background:var(--bg);font-family:Microsoft YaHei,Arial,sans-serif;color:var
 .hero .qr-box{width:160px;height:160px;border:2px dashed #a9c8f0;display:flex;align-items:center;justify-content:center;color:#1f4888;border-radius:8px;background:white;}
 .hero .phone-mock{position:absolute;right:20px;bottom:20px;width:160px;opacity:.9}
 
-.login-card{background:#fff;border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:16px;}
+.login-card{background:#fff;border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:16px;width:700px;}
 .tabs{display:flex;border-bottom:1px solid #eee;margin-bottom:16px;}
 .tabs button{flex:1;background:transparent;border:none;padding:10px 12px;cursor:pointer;color:#666;font-weight:600}
 .tabs button.active{color:var(--brand);border-bottom:2px solid var(--brand)}
 .form{display:flex;flex-direction:column;gap:12px}
 .form-item{display:flex;align-items:center;gap:8px}
-.form-item input{flex:1;padding:10px;border:1px solid #ccc;border-radius:4px;font-size:14px}
+.form-item input{flex:1;padding:10px;border:1px solid #ccc;border-radius:4px;font-size:14px;box-sizing:border-box}
+.form-item select{padding:10px;border:1px solid #ccc;border-radius:4px;font-size:14px;box-sizing:border-box}
 .form-item.password{position:relative}
 .form-item.password .toggle{position:absolute;right:6px;top:6px;border:none;background:#f3f5f9;color:#555;padding:6px 10px;border-radius:4px;cursor:pointer}
 .form-item.captcha .captcha-canvas{border:1px solid #ddd;border-radius:4px}
@@ -33,3 +34,13 @@ body{background:var(--bg);font-family:Microsoft YaHei,Arial,sans-serif;color:var
 .qr-placeholder{width:200px;height:200px;border:2px dashed #ddd;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#888}
 
 @media (max-width:900px){.login-page{grid-template-columns:1fr;}.hero{min-height:auto;margin-bottom:8px}.hero .phone-mock{display:none}}
+
+.reg-row{justify-content:center}
+.reg-label{width:160px;text-align:right;color:#333;font-size:14px;white-space:nowrap}
+.reg-label .req{color:#cc0000;margin-right:6px}
+.reg-input{flex:none;width:340px}
+.reg-select{width:340px}
+.form-item .reg-select{flex:1;width:auto}
+.reg-phone-select{width:120px}
+.reg-phone-input{width:140px}
+.register-page{display:flex !important; justify-content:center;}
