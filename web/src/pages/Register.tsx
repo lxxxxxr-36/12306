@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import type { IdType, BenefitType } from '../services/passengers';
 import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/auth';
-import { generateCaptcha } from '../utils/captcha';
+ 
 import './login.css';
 
 const Register: React.FC = () => {
@@ -21,23 +21,14 @@ const Register: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
 
-  const [captchaText, setCaptchaText] = useState('');
-  const [captchaCode, setCaptchaCode] = useState('');
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => { refreshCaptcha(); }, []);
-  const refreshCaptcha = () => {
-    const { text, draw } = generateCaptcha(120, 38);
-    setCaptchaText(text);
-    setTimeout(() => { if (canvasRef.current) draw(canvasRef.current); }, 0);
-  };
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
     if (!agree) { setError('请阅读并同意《用户注册协议》'); return; }
-    if (captchaCode.trim().toLowerCase() !== captchaText.toLowerCase()) { setError('验证码错误'); refreshCaptcha(); return; }
+    
     const res = await registerUser({
       username,
       password,
@@ -57,13 +48,25 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="login-page">
+    <div className="login-page register-page">
       <div className="login-card">
         <h2 style={{margin:'0 0 12px'}}>注册铁路12306账号</h2>
         <form className="form" onSubmit={handleSubmit}>
-          <div className="form-item"><input type="text" placeholder="用户名（以字母开头，6-30位字母数字或下划线）" value={username} onChange={e=>setUsername(e.target.value)} /></div>
-          <div className="form-item">
-            <select value={idType} onChange={e=>setIdType(e.target.value as IdType)}>
+          <div className="form-item reg-row">
+            <span className="reg-label"><span className="req">*</span> 用户名：</span>
+            <input className="reg-input" type="text" placeholder="请输入用户名" value={username} onChange={e=>setUsername(e.target.value)} />
+          </div>
+          <div className="form-item reg-row">
+            <span className="reg-label"><span className="req">*</span> 登录密码：</span>
+            <input className="reg-input" type="password" placeholder="请输入登录密码" value={password} onChange={e=>setPassword(e.target.value)} />
+          </div>
+          <div className="form-item reg-row">
+            <span className="reg-label"><span className="req">*</span> 确认密码：</span>
+            <input className="reg-input" type="password" placeholder="请再次输入密码" value={confirmPwd} onChange={e=>setConfirmPwd(e.target.value)} />
+          </div>
+          <div className="form-item reg-row">
+            <span className="reg-label"><span className="req">*</span> 证件类型：</span>
+            <select className="reg-select" value={idType} onChange={e=>setIdType(e.target.value as IdType)}>
               <option>居民身份证</option>
               <option>港澳居民居住证</option>
               <option>台湾居民居住证</option>
@@ -74,34 +77,39 @@ const Register: React.FC = () => {
               <option>台湾居民来往大陆通行证</option>
             </select>
           </div>
-          <div className="form-item"><input type="text" placeholder="姓名" value={fullName} onChange={e=>setFullName(e.target.value)} /></div>
-          <div className="form-item"><input type="text" placeholder="证件号码" value={idNo} onChange={e=>setIdNo(e.target.value)} /></div>
-          <div className="form-item">
-            <select value={benefit} onChange={e=>setBenefit(e.target.value as BenefitType)}>
+          <div className="form-item reg-row">
+            <span className="reg-label"><span className="req">*</span> 姓名：</span>
+            <input className="reg-input" type="text" placeholder="请输入姓名" value={fullName} onChange={e=>setFullName(e.target.value)} />
+          </div>
+          <div className="form-item reg-row">
+            <span className="reg-label"><span className="req">*</span> 证件号码：</span>
+            <input className="reg-input" type="text" placeholder="请输入证件号码" value={idNo} onChange={e=>setIdNo(e.target.value)} />
+          </div>
+          <div className="form-item reg-row">
+            <span className="reg-label"><span className="req">*</span> 优惠（待）类型：</span>
+            <select className="reg-select" value={benefit} onChange={e=>setBenefit(e.target.value as BenefitType)}>
               <option>成人</option>
               <option>儿童</option>
               <option>学生</option>
               <option>残疾军人</option>
             </select>
           </div>
-          <div className="form-item"><input type="email" placeholder="邮箱（可选）" value={email} onChange={e=>setEmail(e.target.value)} /></div>
-          <div className="form-item" style={{display:'flex',gap:8}}>
-            <select value={phoneCode} onChange={e=>setPhoneCode(e.target.value as ('+86'|'+852'|'+853'|'+886'))}>
+          <div className="form-item reg-row">
+            <span className="reg-label">邮箱：</span>
+            <input className="reg-input" type="email" placeholder="请正确填写邮箱地址" value={email} onChange={e=>setEmail(e.target.value)} />
+          </div>
+          <div className="form-item reg-row" style={{gap:8}}>
+            <span className="reg-label"><span className="req">*</span> 手机号码：</span>
+            <select className="reg-phone-select" value={phoneCode} onChange={e=>setPhoneCode(e.target.value as ('+86'|'+852'|'+853'|'+886'))}>
               <option value='+86'>+86 中国</option>
               <option value='+852'>+852 中国香港</option>
               <option value='+853'>+853 中国澳门</option>
               <option value='+886'>+886 中国台湾</option>
             </select>
-            <input type="tel" placeholder="电话号码" value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} />
+            <input className="reg-phone-input" type="tel" placeholder="手机号码" value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} />
           </div>
-          <div className="form-item password"><input type="password" placeholder="设置密码" value={password} onChange={e=>setPassword(e.target.value)} /></div>
-          <div className="form-item password"><input type="password" placeholder="确认密码" value={confirmPwd} onChange={e=>setConfirmPwd(e.target.value)} /></div>
 
-          <div className="form-item captcha">
-            <input type="text" placeholder="请输入验证码" value={captchaCode} onChange={e=>setCaptchaCode(e.target.value)} />
-            <canvas ref={canvasRef} width={120} height={38} className="captcha-canvas" aria-label="验证码" />
-            <button type="button" className="link" onClick={refreshCaptcha}>刷新</button>
-          </div>
+          
 
           <div className="form-meta">
             <label><input type="checkbox" checked={agree} onChange={e=>setAgree(e.target.checked)} /> 我已阅读并同意《用户注册协议》</label>
@@ -113,7 +121,7 @@ const Register: React.FC = () => {
           {error && <div className="error">{error}</div>}
           {success && <div className="success">{success}</div>}
 
-          <button type="submit" className="primary">提交注册</button>
+          <button type="submit" className="primary">下一步</button>
         </form>
       </div>
     </div>

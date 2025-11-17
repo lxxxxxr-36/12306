@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './login.css';
-import { generateCaptcha } from '../utils/captcha';
 import { validateLogin, setSession, createQrSession, getQrStatus, markQrScanned, markQrConfirmed } from '../services/auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -12,33 +11,13 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [remember, setRemember] = useState(!!localStorage.getItem('rememberedUsername'));
-  const [captchaCode, setCaptchaCode] = useState('');
-  const [captchaText, setCaptchaText] = useState('');
   const [error, setError] = useState<string>('');
 
-  // draw captcha when page loads
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  useEffect(() => {
-    refreshCaptcha();
-  }, []);
-
-  const refreshCaptcha = () => {
-    const { text, draw } = generateCaptcha(120, 38);
-    setCaptchaText(text);
-    setTimeout(() => {
-      if (canvasRef.current) draw(canvasRef.current);
-    }, 0);
-  };
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    // captcha check first
-    if (captchaCode.trim().toLowerCase() !== captchaText.toLowerCase()) {
-      setError('验证码错误，请重新输入或点击刷新');
-      refreshCaptcha();
-      return;
-    }
     const result = await validateLogin({ username, password });
     if (!result.ok) {
       setError(result.message || '登录失败');
@@ -147,16 +126,7 @@ const Login: React.FC = () => {
               </button>
             </div>
 
-            <div className="form-item captcha">
-              <input
-                type="text"
-                placeholder="请输入验证码"
-                value={captchaCode}
-                onChange={(e) => setCaptchaCode(e.target.value)}
-              />
-              <canvas ref={canvasRef} width={120} height={38} className="captcha-canvas" aria-label="验证码" />
-              <button type="button" className="link" onClick={refreshCaptcha}>刷新</button>
-            </div>
+            
 
             <div className="form-meta">
               <label><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> 记住用户名</label>
