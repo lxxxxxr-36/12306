@@ -44,3 +44,6 @@ body{background:var(--bg);font-family:Microsoft YaHei,Arial,sans-serif;color:var
 .reg-phone-select{width:120px}
 .reg-phone-input{width:140px}
 .register-page{display:flex !important; justify-content:center;}
+
+/* 登录页专用：正方形卡片 */
+.login-page .login-card{width:420px;height:420px;overflow:auto}

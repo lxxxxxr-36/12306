@@ -22,6 +22,7 @@ import BusinessService from './pages/BusinessService'
 import TravelGuide from './pages/TravelGuide'
 import InfoQuery from './pages/InfoQuery'
 import StubPage from './pages/StubPage'
+import { getUserByUsername } from './services/auth'
 
 const CaretDown = () => (
   <svg className="caret" viewBox="0 0 24 24" aria-hidden="true">
@@ -47,7 +48,7 @@ function App() {
             {username ? (
               <span className="welcome">
                 <span className="label">您好，</span>
-                <button className="username-link" onClick={() => navigate('/my')}>{username}</button>
+                <button className="username-link" onClick={() => navigate('/my')}>{getUserByUsername(username)?.fullName || username}</button>
               </span>
             ) : (
               <span className="auth-group">
