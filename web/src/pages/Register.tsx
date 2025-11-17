@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import type { IdType, BenefitType } from '../services/passengers';
 import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/auth';
-import { generateCaptcha } from '../utils/captcha';
+ 
 import './login.css';
 
 const Register: React.FC = () => {
@@ -21,23 +21,14 @@ const Register: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
 
-  const [captchaText, setCaptchaText] = useState('');
-  const [captchaCode, setCaptchaCode] = useState('');
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => { refreshCaptcha(); }, []);
-  const refreshCaptcha = () => {
-    const { text, draw } = generateCaptcha(120, 38);
-    setCaptchaText(text);
-    setTimeout(() => { if (canvasRef.current) draw(canvasRef.current); }, 0);
-  };
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
     if (!agree) { setError('请阅读并同意《用户注册协议》'); return; }
-    if (captchaCode.trim().toLowerCase() !== captchaText.toLowerCase()) { setError('验证码错误'); refreshCaptcha(); return; }
+    
     const res = await registerUser({
       username,
       password,
@@ -118,11 +109,7 @@ const Register: React.FC = () => {
             <input className="reg-phone-input" type="tel" placeholder="手机号码" value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} />
           </div>
 
-          <div className="form-item captcha">
-            <input type="text" placeholder="请输入验证码" value={captchaCode} onChange={e=>setCaptchaCode(e.target.value)} />
-            <canvas ref={canvasRef} width={120} height={38} className="captcha-canvas" aria-label="验证码" />
-            <button type="button" className="link" onClick={refreshCaptcha}>刷新</button>
-          </div>
+          
 
           <div className="form-meta">
             <label><input type="checkbox" checked={agree} onChange={e=>setAgree(e.target.checked)} /> 我已阅读并同意《用户注册协议》</label>
@@ -134,7 +121,7 @@ const Register: React.FC = () => {
           {error && <div className="error">{error}</div>}
           {success && <div className="success">{success}</div>}
 
-          <button type="submit" className="primary">提交注册</button>
+          <button type="submit" className="primary">下一步</button>
         </form>
       </div>
     </div>
