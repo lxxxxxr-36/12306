@@ -148,6 +148,8 @@ const Login: React.FC = () => {
                   <label><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> 记住用户名</label>
                   <div className="links">
                     <a href="#" onClick={(e)=>{e.preventDefault(); navigate('/register')}}>注册12306账号</a>
+                    <span className="divider">|</span>
+                    <a href="#" onClick={(e)=>{e.preventDefault(); navigate('/forgot')}}>忘记密码</a>
                   </div>
                 </div>
 

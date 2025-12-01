@@ -10,7 +10,7 @@ import My12306Menu from './components/My12306Menu'
 import NotFound from './pages/NotFound'
 import Standby from './pages/Standby'
 import Register from './pages/Register'
-/* ForgotPassword 已移除 */
+import ForgotPassword from './pages/ForgotPassword'
 import { useSession } from './hooks/useSession'
 import { logout } from './services/auth'
 import ConfirmOrder from './pages/ConfirmOrder'
@@ -228,6 +228,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot" element={<ForgotPassword />} />
           {/* 忘记密码路由已删除 */}
           <Route path="/results" element={<Results />} />
           <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
