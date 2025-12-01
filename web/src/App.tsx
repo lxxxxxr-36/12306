@@ -80,8 +80,8 @@ function App() {
                 <span>团购服务<CaretDown /></span>
                 <div className={"dropdown" + (openMenu === 'group' ? " open" : "")}>
                   <div className="dd-grid dd-2">
-                    <div className="dd-col"><NavLink to="/stub/group_worker" className="dd-item" onClick={() => setOpenMenu(null)}>务工人员</NavLink></div>
-                    <div className="dd-col"><NavLink to="/stub/group_student" className="dd-item" onClick={() => setOpenMenu(null)}>学生团体</NavLink></div>
+                    <div className="dd-col"><NavLink to="/group?tab=worker" className="dd-item" onClick={() => setOpenMenu(null)}>务工人员</NavLink></div>
+                    <div className="dd-col"><NavLink to="/group?tab=student" className="dd-item" onClick={() => setOpenMenu(null)}>学生团体</NavLink></div>
                   </div>
                 </div>
               </div>

@@ -6,3 +6,9 @@
 *.gz
 *.tgz
 *.tar.gz
+# Node and build outputs
+/web/node_modules/
+/server/node_modules/
+/web/dist/
+/server/dist/
+*.log
