@@ -17,6 +17,10 @@ import ConfirmOrder from './pages/ConfirmOrder'
 import PersonalCenter from './pages/my/PersonalCenter'
 import MemberCenter from './pages/my/MemberCenter'
 import GroupService from './pages/GroupService'
+import FoodSearch from './pages/FoodSearch'
+import FoodBrowse from './pages/FoodBrowse'
+import FoodMerchant from './pages/FoodMerchant'
+import FoodCheckout from './pages/FoodCheckout'
 import StationService from './pages/StationService'
 import BusinessService from './pages/BusinessService'
 import TravelGuide from './pages/TravelGuide'
@@ -128,7 +132,7 @@ function App() {
                 <div className={"dropdown" + (openMenu === 'business' ? " open" : "")}>
                   <div className="dd-grid dd-3">
                     <div className="dd-col">
-                      <NavLink to="/stub/food" className="dd-item" onClick={() => setOpenMenu(null)}>餐饮•特产</NavLink>
+                      <NavLink to="/food" className="dd-item" onClick={() => setOpenMenu(null)}>餐饮•特产</NavLink>
                     </div>
                     <div className="dd-col">
                       <NavLink to="/stub/insurance" className="dd-item" onClick={() => setOpenMenu(null)}>保险</NavLink>
@@ -233,6 +237,10 @@ function App() {
           <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
           <Route path="/checkout/:id" element={<ProtectedRoute><ConfirmOrder /></ProtectedRoute>} />
           <Route path="/standby" element={<Standby />} />
+          <Route path="/food" element={<FoodSearch />} />
+          <Route path="/food/browse" element={<ProtectedRoute><FoodBrowse /></ProtectedRoute>} />
+          <Route path="/food/merchant/:id" element={<ProtectedRoute><FoodMerchant /></ProtectedRoute>} />
+          <Route path="/food/checkout" element={<ProtectedRoute><FoodCheckout /></ProtectedRoute>} />
           <Route path="/my/*" element={<ProtectedRoute><PersonalCenter /></ProtectedRoute>} />
           <Route path="/member" element={<ProtectedRoute><MemberCenter /></ProtectedRoute>} />
           <Route path="/group" element={<ProtectedRoute><GroupService /></ProtectedRoute>} />
