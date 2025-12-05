@@ -10,7 +10,7 @@ const Login: React.FC = () => {
   const [username, setUsername] = useState<string>(() => localStorage.getItem('rememberedUsername') || '');
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
-  const [remember, setRemember] = useState(!!localStorage.getItem('rememberedUsername'));
+  // 取消“记住用户名”功能
   const [error, setError] = useState<string>('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,11 +21,7 @@ const Login: React.FC = () => {
       setError(result.message || '登录失败');
       return;
     }
-    if (remember) {
-      localStorage.setItem('rememberedUsername', username);
-    } else {
-      localStorage.removeItem('rememberedUsername');
-    }
+    // 记住用户名功能已取消
     // 登录成功，设置会话并按来源跳转
     setSession(username);
     const s = location.state as unknown; let from = '/';
@@ -77,41 +73,20 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-wrapper">
-      {/* 头部 */}
-      <header className="header">
-        <div className="logo-section">
-          <img src="/media/图标.png" alt="12306图标" className="logo-icon-img" />
-          <div className="logo-text">
-            <h1 className="logo-main">中国铁路12306</h1>
-            <p className="logo-sub">12306 CHINA RAILWAY</p>
-          </div>
-        </div>
-        <div className="welcome-text">欢迎登录12306</div>
-      </header>
+      {/* 登录页不再展示内部头部 */}
 
       {/* 主登录区域 */}
       <div className="login-container">
         <div className="login-page">
           <div className="hero">
-            <div className="slogan">
-              <h1>铁路12306 - 中国铁路官方APP</h1>
-              <p>尽享精彩出行服务</p>
-              <ul>
-                <li>个人行程提醒</li>
-                <li>积分兑换</li>
-                <li>餐饮·特产</li>
-                <li>车站大屏</li>
-              </ul>
-              <div className="qr-area">
-                <div className="qr-box">
-                  <div>
-                    <div>扫描左侧二维码</div>
-                    <div>安装 铁路12306</div>
-                  </div>
+            <div className="qr-area">
+              <div className="qr-box">
+                <div>
+                  <div>扫描左侧二维码</div>
+                  <div>安装 铁路12306</div>
                 </div>
               </div>
             </div>
-            <img className="phone-mock" alt="app" src="/vite.svg" />
           </div>
 
           <div className="login-card">
@@ -144,22 +119,17 @@ const Login: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="form-meta">
-                  <label><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> 记住用户名</label>
-                  <div className="links">
-                    <a href="#" onClick={(e)=>{e.preventDefault(); navigate('/register')}}>注册12306账号</a>
-                    <span className="divider">|</span>
-                    <a href="#" onClick={(e)=>{e.preventDefault(); navigate('/forgot')}}>忘记密码</a>
-                  </div>
-                </div>
+                {/* 链接移动到按钮下方 */}
 
                 {error && <div className="error">{error}</div>}
 
                 <button type="submit" className="primary">立即登录</button>
-                <div className="note">
-                  铁路12306将于05:00至11:00（周一为05:00至24:00）对系统进行检查维护，如有紧急业务，请错峰办理。
-                  <br />在此期间购票、改签、变更到站等业务，本站对部分功能等进行了优化调整。
+                <div className="links below">
+                  <a href="#" onClick={(e)=>{e.preventDefault(); navigate('/register')}}>注册12306账号</a>
+                  <span className="divider">|</span>
+                  <a href="#" onClick={(e)=>{e.preventDefault(); navigate('/forgot')}}>忘记密码</a>
                 </div>
+                <div className="note">铁路12306每日5:00至次日1:00（周二为5:00至24:00）提供购票、改签、变更到站业务办理， 全天均可办理退票等其他服务。</div>
               </form>
             ) : (
               <div className="qr-login">

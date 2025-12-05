@@ -10,7 +10,7 @@ import My12306Menu from './components/My12306Menu'
 import NotFound from './pages/NotFound'
 import Standby from './pages/Standby'
 import Register from './pages/Register'
-import ForgotPassword from './pages/ForgotPassword'
+/* ForgotPassword 已移除 */
 import { useSession } from './hooks/useSession'
 import { logout } from './services/auth'
 import ConfirmOrder from './pages/ConfirmOrder'
@@ -37,51 +37,60 @@ function App() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const handleLogout = () => { logout(); navigate('/', { replace: true }); };
   useEffect(() => { setOpenMenu(null); }, [location]);
+  const isLoginPage = location.pathname.startsWith('/login');
   return (
     <div>
-      <header className="site-header">
+      <header className={"site-header" + (isLoginPage ? " login" : "")}>
         <div className="wrap">
-          <div className="logo">中国铁路12306</div>
-          <nav>
-            <My12306Menu />
-            <span className="divider">|</span>
-            {username ? (
-              <span className="welcome">
-                <span className="label">您好，</span>
-                <button className="username-link" onClick={() => navigate('/my')}>{getUserByUsername(username)?.fullName || username}</button>
-              </span>
-            ) : (
-              <span className="auth-group">
-                <NavLink className="auth-link" to="/login">登录</NavLink>
-                <span className="divider">|</span>
-                <NavLink className="auth-link" to="/register">注册</NavLink>
-              </span>
-            )}
-            <span className="divider">|</span>
-            {username ? (
-              <button className="logout-link" onClick={handleLogout}>退出</button>
-            ) : null}
-          </nav>
+          <div className="logo">
+            <img src="/media/图标.png" alt="中国铁路12306" className="logo-img" />
+          </div>
+          {isLoginPage && (
+            <div className="login-welcome-text">欢迎登录12306</div>
+          )}
+          {!isLoginPage && (
+            <nav>
+              <My12306Menu />
+              <span className="divider">|</span>
+              {username ? (
+                <span className="welcome">
+                  <span className="label">您好，</span>
+                  <button className="username-link" onClick={() => navigate('/my')}>{getUserByUsername(username)?.fullName || username}</button>
+                </span>
+              ) : (
+                <span className="auth-group">
+                  <NavLink className="auth-link" to="/login">登录</NavLink>
+                  <span className="divider">|</span>
+                  <NavLink className="auth-link" to="/register">注册</NavLink>
+                </span>
+              )}
+              <span className="divider">|</span>
+              {username ? (
+                <button className="logout-link" onClick={handleLogout}>退出</button>
+              ) : null}
+            </nav>
+          )}
         </div>
-        <div className="main-nav">
-          <div className="wrap">
-            <div className="nav-items">
-              <NavLink to="/" end className="nav-item">首页</NavLink>
-              <div className="nav-item has-dropdown" onMouseEnter={() => setOpenMenu('ticket')} onMouseLeave={() => setOpenMenu(null)}>
-                <span>车票<CaretDown /></span>
-                <div className={"dropdown" + (openMenu === 'ticket' ? " open" : "")}>
+        {!isLoginPage && (
+          <div className="main-nav">
+            <div className="wrap">
+              <div className="nav-items">
+                <NavLink to="/" end className="nav-item">首页</NavLink>
+                <div className="nav-item has-dropdown" onMouseEnter={() => setOpenMenu('ticket')} onMouseLeave={() => setOpenMenu(null)}>
+                  <span>车票<CaretDown /></span>
+                  <div className={"dropdown" + (openMenu === 'ticket' ? " open" : "")}> 
                   <NavLink to="/results" className="dd-item" onClick={() => setOpenMenu(null)}>查询结果</NavLink>
                   <NavLink to="/orders" className="dd-item" onClick={() => setOpenMenu(null)}>订单中心</NavLink>
                   <NavLink to="/standby" className="dd-item" onClick={() => setOpenMenu(null)}>候补购票</NavLink>
                 </div>
               </div>
-
+              
               <div className="nav-item has-dropdown" onMouseEnter={() => setOpenMenu('group')} onMouseLeave={() => setOpenMenu(null)}>
                 <span>团购服务<CaretDown /></span>
                 <div className={"dropdown" + (openMenu === 'group' ? " open" : "")}>
                   <div className="dd-grid dd-2">
-                    <div className="dd-col"><NavLink to="/group?tab=worker" className="dd-item" onClick={() => setOpenMenu(null)}>务工人员</NavLink></div>
-                    <div className="dd-col"><NavLink to="/group?tab=student" className="dd-item" onClick={() => setOpenMenu(null)}>学生团体</NavLink></div>
+                    <div className="dd-col"><NavLink to="/stub/group_worker" className="dd-item" onClick={() => setOpenMenu(null)}>务工人员</NavLink></div>
+                    <div className="dd-col"><NavLink to="/stub/group_student" className="dd-item" onClick={() => setOpenMenu(null)}>学生团体</NavLink></div>
                   </div>
                 </div>
               </div>
@@ -222,13 +231,13 @@ function App() {
             </div>
           </div>
         </div>
+        )}
       </header>
-      <main>
+      <main className={isLoginPage ? 'main-fullwidth' : undefined}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/forgot" element={<ForgotPassword />} />
           {/* 忘记密码路由已删除 */}
           <Route path="/results" element={<Results />} />
           <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />

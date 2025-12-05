@@ -1,6 +1,11 @@
 .site-header { background: #fff; border-bottom: 1px solid #eaeaea; }
-.site-header .wrap { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+.site-header .wrap { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
 .site-header .logo { color: var(--brand); font-weight: bold; }
+.site-header .logo .logo-img { height: 48px; display: block; }
+.site-header.login .wrap { justify-content: flex-start; gap: 6px; }
+.site-header.login .login-welcome-text { margin-left: 6px; color: #666; font-size: 18px; }
+
+.main-fullwidth { max-width: none; margin: 0; padding: 0; }
 .site-header nav a { margin: 0; color: #333; font-size: 14px; }
 .site-header nav a.active { color: var(--brand); font-weight: 600; }
 
@@ -27,7 +32,7 @@ main { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
 .main-nav { background: #2ea5ff; }
 .main-nav .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; position: relative; }
 .main-nav .nav-items { display: grid; grid-template-columns: repeat(8, 1fr); align-items: center; width: 100%; column-gap: 8px; }
-.main-nav .nav-item { color: #fff; padding: 12px 16px; text-decoration: none; position: relative; display:flex; align-items:center; justify-content:center; width: 100%; }
+.main-nav .nav-item { color: #fff; padding: 10px 16px; text-decoration: none; position: relative; display:flex; align-items:center; justify-content:center; width: 100%; }
 .main-nav .nav-item:hover { background: #2089e5; }
 .main-nav .caret { margin-left: 6px; width: 14px; height: 14px; opacity: 0.95; vertical-align: middle; }
 .main-nav .has-dropdown { position: static; }

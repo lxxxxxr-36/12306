@@ -69,28 +69,17 @@ body{
 
 /* 主登录区域 */
 .login-container{
-  background:linear-gradient(135deg, var(--blue-gradient) 0%, #5A86E8 100%), url('/media/背景图.png');
-  background-size:cover;
-  background-position:center;
-  background-blend-mode:overlay;
-  min-height:calc(100vh - 72px);
+  background: url('/media/背景图.png') no-repeat center top;
+  background-size: 100% auto;
+  min-height: calc(100vh - 68px);
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:32px;
+  padding:0;
   position:relative;
 }
 
-.login-container::before{
-  content:'';
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  bottom:0;
-  background:linear-gradient(135deg, rgba(94,139,239,0.9) 0%, rgba(90,134,232,0.9) 100%);
-  z-index:1;
-}
+/* 移除覆盖层，确保背景图完整显示 */
 
 .login-page{
   position:relative;
@@ -108,11 +97,11 @@ body{
 
 /* 左侧宣传区域 */
 .hero{
-  padding:40px;
+  padding:0;
   position:relative;
   min-height:500px;
   display:flex;
-  flex-direction:column;
+  align-items:center;
   justify-content:center;
 }
 
@@ -155,7 +144,10 @@ body{
 }
 
 .hero .qr-area{
-  margin-top:32px;
+  margin-top:0;
+  position:absolute;
+  top:16px;
+  left:24px;
 }
 
 .hero .qr-box{
@@ -173,14 +165,7 @@ body{
   font-size:14px;
 }
 
-.hero .phone-mock{
-  position:absolute;
-  right:20px;
-  bottom:20px;
-  width:200px;
-  opacity:0.9;
-  filter:drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-}
+/* 移除示意手机图 */
 
 /* 登录卡片 */
 .login-card{
@@ -189,10 +174,11 @@ body{
   box-shadow:0 8px 24px rgba(0,0,0,0.15);
   padding:32px;
   width:100%;
-  max-width:420px;
+  max-width:345px;
+  transform: translate(20px, -150px);
 }
 
-.login-card{background:#fff;border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:16px;width:700px;}
+.login-card{background:#fff;border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:16px;}
 /* 标签页样式 */
 .tabs{display:flex;border-bottom:2px solid #f0f0f0;margin-bottom:24px;}
 .tabs button{flex:1;background:transparent;border:none;padding:12px 16px;cursor:pointer;color:#999;font-size:16px;font-weight:500;transition:all 0.3s ease;}
@@ -220,8 +206,8 @@ body{
 .error{background:#fff2f0;color:var(--danger);padding:12px;border-radius:6px;border:1px solid #ffccc7;margin:8px 0;font-size:13px;}
 
 /* 主要按钮 */
-.primary{background:var(--accent);color:white;border:none;border-radius:8px;padding:14px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s ease;margin-top:8px;}
-.primary:hover{background:#FF6F00;transform:translateY(-1px);box-shadow:0 4px 12px rgba(255,140,0,0.3);}
+.login-card .primary{background:#FF7A00 !important;color:white;border:none;border-radius:8px;padding:14px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s ease;margin-top:8px;}
+.login-card .primary:hover{background:#f0b67b !important;transform:translateY(-1px);box-shadow:0 4px 12px rgba(255,196,138,0.35);} 
 .primary:active{transform:translateY(0);}
 
 /* 提示文字 */
@@ -307,3 +293,7 @@ body{
   height:16px;
   accent-color:var(--brand);
 }
+.links.below{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;}
+.links.below{font-size:12px;}
+.links.below a:first-child{color:var(--brand);text-decoration:none;}
+.links.below a:last-child{color:#888;text-decoration:none;}
