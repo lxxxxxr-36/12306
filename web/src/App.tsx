@@ -1,4 +1,4 @@
-import { NavLink, Route, Routes, useNavigate, useLocation } from 'react-router-dom'
+import { NavLink, Route, Routes, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import './App.css'
 import Home from './pages/Home'
@@ -10,7 +10,7 @@ import My12306Menu from './components/My12306Menu'
 import NotFound from './pages/NotFound'
 import Standby from './pages/Standby'
 import Register from './pages/Register'
-/* ForgotPassword 已移除 */
+import ForgotPassword from './pages/ForgotPassword'
 import { useSession } from './hooks/useSession'
 import { logout } from './services/auth'
 import ConfirmOrder from './pages/ConfirmOrder'
@@ -89,8 +89,8 @@ function App() {
                 <span>团购服务<CaretDown /></span>
                 <div className={"dropdown" + (openMenu === 'group' ? " open" : "")}>
                   <div className="dd-grid dd-2">
-                    <div className="dd-col"><NavLink to="/stub/group_worker" className="dd-item" onClick={() => setOpenMenu(null)}>务工人员</NavLink></div>
-                    <div className="dd-col"><NavLink to="/stub/group_student" className="dd-item" onClick={() => setOpenMenu(null)}>学生团体</NavLink></div>
+                    <div className="dd-col"><NavLink to="/group?tab=worker" className="dd-item" onClick={() => setOpenMenu(null)}>务工人员</NavLink></div>
+                    <div className="dd-col"><NavLink to="/group?tab=student" className="dd-item" onClick={() => setOpenMenu(null)}>学生团体</NavLink></div>
                   </div>
                 </div>
               </div>
@@ -238,18 +238,20 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          {/* 忘记密码路由已删除 */}
+          <Route path="/forgot" element={<ForgotPassword />} />
           <Route path="/results" element={<Results />} />
           <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
           <Route path="/checkout/:id" element={<ProtectedRoute><ConfirmOrder /></ProtectedRoute>} />
           <Route path="/standby" element={<Standby />} />
           <Route path="/my/*" element={<ProtectedRoute><PersonalCenter /></ProtectedRoute>} />
           <Route path="/member" element={<ProtectedRoute><MemberCenter /></ProtectedRoute>} />
-          <Route path="/group" element={<ProtectedRoute><GroupService /></ProtectedRoute>} />
+          <Route path="/group" element={<GroupService />} />
           <Route path="/station" element={<ProtectedRoute><StationService /></ProtectedRoute>} />
           <Route path="/business" element={<ProtectedRoute><BusinessService /></ProtectedRoute>} />
           <Route path="/guide" element={<TravelGuide />} />
           <Route path="/info" element={<InfoQuery />} />
+          <Route path="/stub/group_worker" element={<Navigate to="/group?tab=worker" replace />} />
+          <Route path="/stub/group_student" element={<Navigate to="/group?tab=student" replace />} />
           <Route path="/stub/:slug" element={<StubPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
