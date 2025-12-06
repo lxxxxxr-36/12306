@@ -5,7 +5,7 @@ import { isLoggedIn } from '../services/auth';
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const location = useLocation();
   if (!isLoggedIn()) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
   }
   return children;
 };
