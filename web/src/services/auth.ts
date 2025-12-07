@@ -17,6 +17,8 @@ export interface RegisterInput {
 }
 export interface ResetRequest { account: string }
 export interface ResetPayload { account: string; code: string; newPassword: string }
+export interface VerifyCodeReq { account: string; code: string }
+export interface ValidateIdentityReq { phoneNumber: string; idType: IdType; idNo: string }
 
 // 用户库管理（localStorage，仅演示）
 type UserRecord = {
@@ -35,7 +37,7 @@ function getUsers(): UserRecord[] { try { return JSON.parse(localStorage.getItem
 function saveUsers(list: UserRecord[]) { localStorage.setItem(USERS_KEY, JSON.stringify(list)); }
 function findUser(account: string): UserRecord | undefined {
   const u = getUsers();
-  return u.find(x => x.username === account || x.email === account || (x.phoneCode === '+86' && x.phoneNumber === account));
+  return u.find(x => x.username === account || x.email === account || x.phoneNumber === account);
 }
 export function getUserByUsername(username: string): UserRecord | undefined { return getUsers().find(x => x.username === username); }
 export async function updateUserInfo(username: string, patch: Partial<{ email: string; phoneCode: '+86' | '+852' | '+853' | '+886'; phoneNumber: string; benefit: BenefitType }>): Promise<{ok:boolean;message?:string}> {
@@ -120,17 +122,38 @@ export async function requestPasswordReset(req: ResetRequest): Promise<{ok:boole
   if (!user) return { ok:false, message:'账号不存在' };
   const code = String(Math.floor(100000 + Math.random()*900000));
   localStorage.setItem(RESET_PREFIX+req.account, JSON.stringify({ code, ts: Date.now() }));
+  try {
+    fetch('/__dev/log-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ account: req.account, code }) });
+  } catch (e) { void e; }
   return { ok:true, code };
+}
+
+export async function verifyResetCode(req: VerifyCodeReq): Promise<{ok:boolean;message?:string}> {
+  await new Promise(r=>setTimeout(r, 150));
+  const dataRaw = localStorage.getItem(RESET_PREFIX+req.account);
+  if (!dataRaw) return { ok:false, message:'请先发送验证码' };
+  const data = JSON.parse(dataRaw);
+  if (Date.now() - data.ts > 60*1000) return { ok:false, message:'验证码已过期' };
+  if (req.code !== data.code) return { ok:false, message:'验证码错误' };
+  return { ok:true };
+}
+
+export async function validateAccountIdentity(req: ValidateIdentityReq): Promise<{ok:boolean;message?:string}> {
+  await new Promise(r=>setTimeout(r, 150));
+  const user = findUser(req.phoneNumber);
+  if (!user) return { ok:false, message:'账号不存在' };
+  if (user.idType !== req.idType || user.idNo !== req.idNo) return { ok:false, message:'手机号与证件信息不匹配' };
+  return { ok:true };
 }
 export async function resetPassword(payload: ResetPayload): Promise<{ok:boolean;message?:string}> {
   await new Promise(r=>setTimeout(r, 200));
   const dataRaw = localStorage.getItem(RESET_PREFIX+payload.account);
   if (!dataRaw) return { ok:false, message:'请先发送验证码' };
   const data = JSON.parse(dataRaw);
-  if (Date.now() - data.ts > 10*60*1000) return { ok:false, message:'验证码已过期' };
+  if (Date.now() - data.ts > 60*1000) return { ok:false, message:'验证码已过期' };
   if (payload.code !== data.code) return { ok:false, message:'验证码错误' };
   const users = getUsers();
-  const idx = users.findIndex(u => u.username === payload.account || u.email === payload.account || (u.phoneCode === '+86' && u.phoneNumber === payload.account));
+  const idx = users.findIndex(u => u.username === payload.account || u.email === payload.account || u.phoneNumber === payload.account);
   if (idx === -1) return { ok:false, message:'账号不存在' };
   users[idx].password = payload.newPassword;
   saveUsers(users);

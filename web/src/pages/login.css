@@ -297,3 +297,15 @@ body{
 .links.below{font-size:12px;}
 .links.below a:first-child{color:var(--brand);text-decoration:none;}
 .links.below a:last-child{color:#888;text-decoration:none;}
+.register-page .login-card{background:transparent;box-shadow:none;border:none;transform:none;max-width:700px;padding:0;}
+.register-page .form{margin:0 auto;max-width:700px}
+.register-page .reg-row{justify-content:flex-start}
+.register-page .reg-label{width:160px}
+.register-page .reg-controls{width:340px;display:grid;grid-template-columns:100px 1fr;gap:8px}
+.register-page .reg-controls .reg-select{width:100px}
+.register-page .reg-controls .reg-input{width:auto}
+.register-page .reg-controls.single{grid-template-columns:1fr}
+.register-page .reg-controls.single .reg-select{width:340px}
+.register-page .reg-controls.single .reg-input{width:340px}
+.hint{color:var(--accent);font-size:12px;margin-left:12px}
+.primary.narrow{width:140px}
