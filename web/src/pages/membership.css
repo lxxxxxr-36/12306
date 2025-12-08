@@ -1,0 +1,73 @@
+/* 会员页样式 */
+.member-page{ background:#fff; }
+
+.member-hero{ 
+  background: url('/media/会员页背景.png') no-repeat center top;
+  background-size: 100% auto; /* 覆盖全宽，保持长宽比 */
+  min-height: 360px;
+  position: relative;
+}
+
+.member-overlay{ 
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  align-items: center;
+  min-height: 360px;
+}
+
+.member-sidebar{
+  grid-column: 2 / span 1; /* 接近左侧1/6位置 */
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(2px);
+  border-radius: 8px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.member-link{ 
+  background: transparent;
+  color: #fff;
+  border: none;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.member-link:hover{ background: rgba(255,255,255,0.2); }
+.member-link.active{ background: rgba(46,165,255,0.6); }
+
+.member-title{ 
+  grid-column: 3 / span 3;
+  color:#fff;
+}
+.member-title h1{ margin:0; font-size:36px; }
+.member-title p{ margin:6px 0 0; font-size:18px; }
+
+.member-tiles{ 
+  max-width: 1200px;
+  margin: 24px auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+.tile{ 
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px dashed #d9d9d9;border-radius:8px;padding:24px;background:#fff;cursor:pointer;
+}
+.tile:hover{ box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+.tile .icon{ width:56px; height:56px; border-radius:50%; background:#2ea5ff; }
+.tile .label{ margin-top:8px; color:#333; }
+.icon.ticket{}
+.icon.transfer{}
+.icon.food{}
+.icon.warm{}
+
+.member-content{ max-width: 1200px; margin: 24px auto 48px; }
+.placeholder{ background:#fafafa;border:1px solid #eee;border-radius:8px;padding:24px;color:#666;text-align:center; }
+

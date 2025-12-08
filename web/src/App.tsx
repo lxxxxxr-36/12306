@@ -15,7 +15,7 @@ import { useSession } from './hooks/useSession'
 import { logout } from './services/auth'
 import ConfirmOrder from './pages/ConfirmOrder'
 import PersonalCenter from './pages/my/PersonalCenter'
-import MemberCenter from './pages/my/MemberCenter'
+import Membership from './pages/Membership'
 import GroupService from './pages/GroupService'
 import StationService from './pages/StationService'
 import BusinessService from './pages/BusinessService'
@@ -98,12 +98,12 @@ function App() {
               <div className="nav-item has-dropdown" onMouseEnter={() => setOpenMenu('member')} onMouseLeave={() => setOpenMenu(null)}>
                 <span>会员服务<CaretDown /></span>
                 <div className={"dropdown" + (openMenu === 'member' ? " open" : "")}>
-                  <div className="dd-grid dd-5">
-                    <div className="dd-col"><NavLink to="/stub/member_mgmt" className="dd-item" onClick={() => setOpenMenu(null)}>会员管理</NavLink></div>
-                    <div className="dd-col"><NavLink to="/stub/member_points" className="dd-item" onClick={() => setOpenMenu(null)}>积分账户</NavLink></div>
-                    <div className="dd-col"><NavLink to="/stub/member_exchange" className="dd-item" onClick={() => setOpenMenu(null)}>积分兑换</NavLink></div>
-                    <div className="dd-col"><NavLink to="/stub/member_exclusive" className="dd-item" onClick={() => setOpenMenu(null)}>会员专享</NavLink></div>
-                    <div className="dd-col"><NavLink to="/member" className="dd-item" onClick={() => setOpenMenu(null)}>会员中心</NavLink></div>
+                    <div className="dd-grid dd-5">
+                    <div className="dd-col"><NavLink to="/membership?tab=manage" className="dd-item" onClick={() => setOpenMenu(null)}>会员管理</NavLink></div>
+                    <div className="dd-col"><NavLink to="/membership?tab=points" className="dd-item" onClick={() => setOpenMenu(null)}>积分账户</NavLink></div>
+                    <div className="dd-col"><NavLink to="/membership?tab=exchange" className="dd-item" onClick={() => setOpenMenu(null)}>积分兑换</NavLink></div>
+                    <div className="dd-col"><NavLink to="/membership?tab=exclusive" className="dd-item" onClick={() => setOpenMenu(null)}>会员专享</NavLink></div>
+                    <div className="dd-col"><NavLink to="/membership?tab=help" className="dd-item" onClick={() => setOpenMenu(null)}>帮助中心</NavLink></div>
                   </div>
                 </div>
               </div>
@@ -244,7 +244,7 @@ function App() {
           <Route path="/checkout/:id" element={<ProtectedRoute><ConfirmOrder /></ProtectedRoute>} />
           <Route path="/standby" element={<Standby />} />
           <Route path="/my/*" element={<ProtectedRoute><PersonalCenter /></ProtectedRoute>} />
-          <Route path="/member" element={<ProtectedRoute><MemberCenter /></ProtectedRoute>} />
+          <Route path="/membership" element={<Membership />} />
           <Route path="/group" element={<GroupService />} />
           <Route path="/station" element={<ProtectedRoute><StationService /></ProtectedRoute>} />
           <Route path="/business" element={<ProtectedRoute><BusinessService /></ProtectedRoute>} />
