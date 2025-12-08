@@ -16,6 +16,7 @@ import { logout } from './services/auth'
 import ConfirmOrder from './pages/ConfirmOrder'
 import PersonalCenter from './pages/my/PersonalCenter'
 import Membership from './pages/Membership'
+import MemberCenter from './pages/my/MemberCenter'
 import GroupService from './pages/GroupService'
 import StationService from './pages/StationService'
 import BusinessService from './pages/BusinessService'
@@ -38,6 +39,7 @@ function App() {
   const handleLogout = () => { logout(); navigate('/', { replace: true }); };
   useEffect(() => { setOpenMenu(null); }, [location]);
   const isLoginPage = location.pathname.startsWith('/login');
+  const isMemberPage = location.pathname.startsWith('/membership');
   return (
     <div>
       <header className={"site-header" + (isLoginPage ? " login" : "")}>
@@ -99,11 +101,11 @@ function App() {
                 <span>会员服务<CaretDown /></span>
                 <div className={"dropdown" + (openMenu === 'member' ? " open" : "")}>
                     <div className="dd-grid dd-5">
-                    <div className="dd-col"><NavLink to="/membership?tab=manage" className="dd-item" onClick={() => setOpenMenu(null)}>会员管理</NavLink></div>
-                    <div className="dd-col"><NavLink to="/membership?tab=points" className="dd-item" onClick={() => setOpenMenu(null)}>积分账户</NavLink></div>
-                    <div className="dd-col"><NavLink to="/membership?tab=exchange" className="dd-item" onClick={() => setOpenMenu(null)}>积分兑换</NavLink></div>
-                    <div className="dd-col"><NavLink to="/membership?tab=exclusive" className="dd-item" onClick={() => setOpenMenu(null)}>会员专享</NavLink></div>
-                    <div className="dd-col"><NavLink to="/membership?tab=help" className="dd-item" onClick={() => setOpenMenu(null)}>帮助中心</NavLink></div>
+                    <div className="dd-col"><NavLink to="/membership" className="dd-item" onClick={() => setOpenMenu(null)}>会员管理</NavLink></div>
+                    <div className="dd-col"><NavLink to="/membership" className="dd-item" onClick={() => setOpenMenu(null)}>积分账户</NavLink></div>
+                    <div className="dd-col"><NavLink to="/membership" className="dd-item" onClick={() => setOpenMenu(null)}>积分兑换</NavLink></div>
+                    <div className="dd-col"><NavLink to="/membership" className="dd-item" onClick={() => setOpenMenu(null)}>会员专享</NavLink></div>
+                    <div className="dd-col"><NavLink to="/membership" className="dd-item" onClick={() => setOpenMenu(null)}>帮助中心</NavLink></div>
                   </div>
                 </div>
               </div>
@@ -233,7 +235,7 @@ function App() {
         </div>
         )}
       </header>
-      <main className={isLoginPage ? 'main-fullwidth' : undefined}>
+      <main className={(isLoginPage || isMemberPage) ? 'main-fullwidth' : undefined}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -245,6 +247,7 @@ function App() {
           <Route path="/standby" element={<Standby />} />
           <Route path="/my/*" element={<ProtectedRoute><PersonalCenter /></ProtectedRoute>} />
           <Route path="/membership" element={<Membership />} />
+          <Route path="/member" element={<ProtectedRoute><MemberCenter /></ProtectedRoute>} />
           <Route path="/group" element={<GroupService />} />
           <Route path="/station" element={<ProtectedRoute><StationService /></ProtectedRoute>} />
           <Route path="/business" element={<ProtectedRoute><BusinessService /></ProtectedRoute>} />

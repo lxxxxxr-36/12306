@@ -20,27 +20,35 @@
 
 .member-sidebar{
   grid-column: 2 / span 1; /* 接近左侧1/6位置 */
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(2px);
+  background: rgba(255,255,255,0.25);
   border-radius: 8px;
-  padding: 16px 12px;
+  padding: 10px 6px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  transform: translateX(-220px);
+  width: 140px;
 }
-
+.member-item-row{ position: relative; height: 48px; display:flex; align-items:center; }
 .member-link{ 
   background: transparent;
   color: #fff;
   border: none;
-  text-align: left;
-  padding: 8px 10px;
+  text-align: center;
+  padding: 8px 0;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  width: 100%;
 }
 .member-link:hover{ background: rgba(255,255,255,0.2); }
 .member-link.active{ background: rgba(46,165,255,0.6); }
+
+.hover-panel{ position: absolute; left: 150px; top: 8px; background: rgba(255,255,255,0.8); border-radius: 10px; padding: 10px 12px; display:flex; gap:16px; align-items:center; }
+.hover-item{ background: transparent; border:none; color:#555; cursor:pointer; padding:6px 8px; border-radius:6px; }
+.hover-item:hover{ background:#e6eefc; color:#2ea5ff; }
+.hover-item.disabled{ color:#666; cursor:default; }
+.hover-notch{ position:absolute; left:-10px; top:14px; width:0; height:0; border-top:10px solid transparent; border-bottom:10px solid transparent; border-right:10px solid rgba(255,255,255,0.8); }
 
 .member-title{ 
   grid-column: 3 / span 3;
@@ -67,7 +75,3 @@
 .icon.transfer{}
 .icon.food{}
 .icon.warm{}
-
-.member-content{ max-width: 1200px; margin: 24px auto 48px; }
-.placeholder{ background:#fafafa;border:1px solid #eee;border-radius:8px;padding:24px;color:#666;text-align:center; }
-

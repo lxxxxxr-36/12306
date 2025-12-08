@@ -1,38 +1,65 @@
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import './membership.css'
 
 const tabs = [
-  { key: 'manage', label: '会员管理' },
-  { key: 'points', label: '积分账户' },
-  { key: 'exchange', label: '积分兑换' },
-  { key: 'exclusive', label: '会员专享' },
-  { key: 'help', label: '帮助中心' },
-]
+  { key: 'manage', label: '会员管理', subs: [
+    { key: 'profile', label: '个人信息' },
+    { key: 'level', label: '会员等级' },
+    { key: 'security', label: '账户安全' },
+  ]},
+  { key: 'points', label: '积分账户', subs: [
+    { key: 'points_query', label: '积分查询' },
+    { key: 'points_recover', label: '积分补登' },
+  ]},
+  { key: 'exchange', label: '积分兑换', subs: [
+    { key: 'beneficiary', label: '受让人管理' },
+    { key: 'redeem_ticket', label: '兑换车票' },
+  ]},
+  { key: 'exclusive', label: '会员专享', subs: [] },
+  { key: 'help', label: '帮助中心', subs: [
+    { key: 'notice', label: '会员须知' },
+    { key: 'about_member', label: '关于会员' },
+    { key: 'about_points', label: '关于积分' },
+  ]},
+] as const
 
 const Membership: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const qs = new URLSearchParams(location.search)
-  const active = tabs.some(t => t.key === qs.get('tab')) ? (qs.get('tab') as string) : 'manage'
+  const active = tabs.some(t => t.key === qs.get('tab')) ? (qs.get('tab') as string) : ''
+  const [hoverKey, setHoverKey] = useState<string>('')
+  const hoverIndex = useMemo(() => tabs.findIndex(t => t.key === hoverKey), [hoverKey])
 
   return (
     <div className="member-page">
       <section className="member-hero">
         <div className="member-overlay">
-          <nav className="member-sidebar">
-            {tabs.map(t => (
-              <button
-                key={t.key}
-                className={'member-link' + (active === t.key ? ' active' : '')}
-                onClick={() => navigate(`/membership?tab=${t.key}`)}
-              >{t.label}</button>
+          <nav className="member-sidebar" onMouseLeave={()=>setHoverKey('')}>
+            {tabs.map((t, idx) => (
+              <div key={t.key} className="member-item-row">
+                <button
+                  className={'member-link' + (active === t.key ? ' active' : '')}
+                  onClick={(e)=>{ e.preventDefault(); }}
+                  onMouseEnter={()=>setHoverKey(t.key)}
+                >{t.label}</button>
+                {hoverKey===t.key && (
+                  <div className="hover-panel" style={{ top: idx*48 + 8 }}>
+                    {t.key==='exclusive' ? (
+                      <div className="hover-item disabled">敬请期待</div>
+                    ) : (
+                      t.subs.map(s => (
+                        <button key={s.key} className="hover-item" onClick={()=>navigate(`/member?sub=${s.key}`)}>{s.label}</button>
+                      ))
+                    )}
+                    <span className="hover-notch" />
+                  </div>
+                )}
+              </div>
             ))}
           </nav>
-          <div className="member-title">
-            <h1>铁路畅行</h1>
-            <p>会员计划</p>
-          </div>
+          
         </div>
       </section>
 
@@ -55,12 +82,8 @@ const Membership: React.FC = () => {
         </div>
       </section>
 
-      <section className="member-content">
-        <div className="placeholder">{tabs.find(t => t.key === active)?.label} 页面占位</div>
-      </section>
     </div>
   )
 }
 
 export default Membership
-
