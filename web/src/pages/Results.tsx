@@ -110,6 +110,20 @@ import { popularCities } from '../constants/cities';
   const [checkedDestStations, setCheckedDestStations] = React.useState<string[]>([]);
   React.useEffect(()=>{ setCheckedOriginStations(originStations); }, [originStations]);
   React.useEffect(()=>{ setCheckedDestStations(destStations); }, [destStations]);
+  React.useEffect(() => {
+    if (!date) {
+      const qs = new URLSearchParams({
+        origin,
+        dest,
+        date: todayLocalISO(),
+        hs: hs ? '1' : '0',
+        stu: stu ? '1' : '0',
+        ticketType,
+        ...(ticketType === 'roundtrip' && returnDate ? { returnDate } : {}),
+      });
+      navigate(`/results?${qs.toString()}` , { replace: true });
+    }
+  }, [date]);
 
    const [data, setData] = React.useState<Train[]>([]);
   React.useEffect(()=>{
@@ -237,6 +251,27 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
   navigate(`/checkout/${orderA.id}`);
 };
 
+  const handleQuery = () => {
+    const today = todayLocalISO();
+    if (!date || date < today) { alert('出发日期不能早于今天'); return; }
+    if (ticketType === 'roundtrip') {
+      if (!returnDate) { alert('请选择返程日期'); return; }
+      const depart = new Date(date);
+      const back = new Date(returnDate);
+      if (!(back.getTime() > depart.getTime())) { alert('返程日期必须晚于出发日期'); return; }
+    }
+    const qs = new URLSearchParams({
+      origin,
+      dest,
+      date,
+      hs: hs ? '1' : '0',
+      stu: stu ? '1' : '0',
+      ticketType,
+      ...(ticketType === 'roundtrip' && returnDate ? { returnDate } : {}),
+    });
+    navigate(`/results?${qs.toString()}`);
+  };
+
   return (
     <div className="results-page">
       <div className="searchbar">
@@ -249,7 +284,7 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
             <input className="input" value={origin} onChange={e=>navigate(`/results?${new URLSearchParams({ origin: e.target.value, dest, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} placeholder="出发地" />
             <span className="swap">→</span>
             <input className="input" value={dest} onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest: e.target.value, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} placeholder="目的地" />
-            <input type="date" className="input" value={date} onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest, date: e.target.value, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} />
+            <input type="date" className="input" value={date || todayLocalISO()} min={todayLocalISO()} onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest, date: e.target.value, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} />
             {ticketType==='roundtrip' && (
               <input type="date" className="input" value={returnDate} min={date || undefined} onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest, date, returnDate: e.target.value, hs: hs? '1':'0', stu: stu? '1':'0', ticketType }).toString()}`)} />
             )}
@@ -257,7 +292,7 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
               <label><input type="radio" name="stu" checked={!stu} onChange={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs?'1':'0', stu:'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} /> 普通</label>
               <label><input type="radio" name="stu" checked={stu} onChange={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs?'1':'0', stu:'1', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} /> 学生</label>
             </div>
-            <button className="search-btn" onClick={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs?'1':'0', stu: stu?'1':'0', ticketType, ...(ticketType==='roundtrip' && returnDate ? { returnDate } : {}) }).toString()}`)}>查询</button>
+            <button className="search-btn" onClick={handleQuery}>查询</button>
           </div>
         </div>
         <div className="tabs-panel">

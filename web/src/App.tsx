@@ -79,11 +79,45 @@ function App() {
                 <div className="nav-item has-dropdown" onMouseEnter={() => setOpenMenu('ticket')} onMouseLeave={() => setOpenMenu(null)}>
                   <span>车票<CaretDown /></span>
                   <div className={"dropdown" + (openMenu === 'ticket' ? " open" : "")}> 
-                  <NavLink to="/results" className="dd-item" onClick={() => setOpenMenu(null)}>查询结果</NavLink>
-                  <NavLink to="/orders" className="dd-item" onClick={() => setOpenMenu(null)}>订单中心</NavLink>
-                  <NavLink to="/standby" className="dd-item" onClick={() => setOpenMenu(null)}>候补购票</NavLink>
+                    <div className="dd-grid dd-3">
+                      <div className="dd-col">
+                        <div className="dd-title">购买</div>
+                        <div className="dd-nested">
+                          <div>
+                            <NavLink to="/results?ticketType=oneway" className="dd-item" onClick={() => setOpenMenu(null)}>单程</NavLink>
+                            <NavLink to="/results?ticketType=roundtrip" className="dd-item" onClick={() => setOpenMenu(null)}>往返</NavLink>
+                            <NavLink to="/stub/transfer" className="dd-item" onClick={() => setOpenMenu(null)}>中转换乘</NavLink>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="dd-col">
+                        <div className="dd-title">变更</div>
+                        <div className="dd-nested">
+                          <div>
+                            <NavLink to="/stub/refund" className="dd-item" onClick={() => setOpenMenu(null)}>退票</NavLink>
+                            <NavLink to="/stub/reschedule" className="dd-item" onClick={() => setOpenMenu(null)}>改签</NavLink>
+                            <NavLink to="/stub/change_station" className="dd-item" onClick={() => setOpenMenu(null)}>变更到站</NavLink>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="dd-col">
+                        <div className="dd-title">更多</div>
+                        <div className="dd-nested">
+                          <div>
+                            <NavLink to="/stub/crh_card" className="dd-item" onClick={() => setOpenMenu(null)}>中铁银通卡</NavLink>
+                            <NavLink to="/stub/international" className="dd-item" onClick={() => setOpenMenu(null)}>国际列车</NavLink>
+                          </div>
+                        </div>
+                        <div className="dd-nested" style={{marginTop:8}}>
+                          <div>
+                            <NavLink to="/orders" className="dd-item" onClick={() => setOpenMenu(null)}>订单中心</NavLink>
+                            <NavLink to="/standby" className="dd-item" onClick={() => setOpenMenu(null)}>候补购票</NavLink>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
               
               <div className="nav-item has-dropdown" onMouseEnter={() => setOpenMenu('group')} onMouseLeave={() => setOpenMenu(null)}>
                 <span>团购服务<CaretDown /></span>
