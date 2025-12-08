@@ -60,22 +60,10 @@ import { popularCities } from '../constants/cities';
    return { seatType: best.type, price: best.price ?? 0 };
  }
  // 新增：选择席别的默认逻辑（仅在商务/一等/二等中选择最低价且有票）
- function defaultSelectableSeat(train: Train): 'sw'|'ydz'|'edz' {
-   const candidates: Array<'sw'|'ydz'|'edz'> = ['edz','ydz','sw'];
-   const available = candidates
-     .map(t => ({ t, avail: train.types[t] ?? 0, price: train.price[t] ?? Infinity }))
-     .filter(x => x.avail > 0)
-     .sort((a,b)=> a.price - b.price);
-   return available.length ? available[0].t : 'edz';
- }
+// 已移至下单页处理席别选择
 
  // 工具：日期比较（严格晚于）
- function isDateAfterStrict(a: string, b: string) {
-   if (!a || !b) return false;
-   const da = new Date(a).getTime();
-   const db = new Date(b).getTime();
-   return da > db;
- }
+// 日期比较逻辑已移动到表单页
  function todayLocalISO() {
    const d = new Date();
    d.setHours(0,0,0,0);
@@ -86,20 +74,19 @@ import { popularCities } from '../constants/cities';
    const { search } = useLocation();
    const navigate = useNavigate();
    const params = new URLSearchParams(search);
-   const origin = params.get('origin') || '';
-   const dest = params.get('dest') || '';
-   const date = params.get('date') || '';
-   const hs = params.get('hs') === '1';
-   const stu = params.get('stu') === '1';
-   const ticketType = (params.get('ticketType') as ('oneway'|'roundtrip') | null) || 'oneway';
-  const returnDate = params.get('returnDate') || '';
-  const isValidRoundtripDate = React.useMemo(() => isDateAfterStrict(returnDate, date), [returnDate, date]);
+  const origin = params.get('origin') || '';
+  const dest = params.get('dest') || '';
+  const date = params.get('date') || '';
+  const hs = params.get('hs') === '1';
+  const stu = params.get('stu') === '1';
+  const ticketType = (params.get('ticketType') as ('oneway'|'roundtrip') | null) || 'oneway';
+ const returnDate = params.get('returnDate') || '';
+ // roundtrip 校验移至后续表单
   const isDepartValidToday = React.useMemo(() => !!date && date >= todayLocalISO(), [date]);
   const [sortBy, setSortBy] = React.useState<'depart'|'arrive'|'duration'|'price'>('depart');
    const [seatFilter, setSeatFilter] = React.useState<'all'|'sw'|'ydz'|'edz'|'wz'>('all');
    // 新增：记录每个车次的所选席别（商务/一等/二等）
-   const [selectedSeats, setSelectedSeats] = React.useState<Record<string, 'sw'|'ydz'|'edz'>>({});
-   // 新增：中转换乘
+  // 新增：中转换乘
    const [showTransfer, setShowTransfer] = React.useState(false);
    const [transferOptions, setTransferOptions] = React.useState<Array<{ mid: string; a: Train; b: Train }>>([]);
    const [loadingTransfer, setLoadingTransfer] = React.useState(false);
@@ -107,12 +94,28 @@ import { popularCities } from '../constants/cities';
   const [onlyAvailable, setOnlyAvailable] = React.useState(false);
   const [departSlot, setDepartSlot] = React.useState<'all'|'0-6'|'6-12'|'12-18'|'18-24'>('all');
   const [typeFilter, setTypeFilter] = React.useState<{G:boolean; D:boolean}>({ G: true, D: true });
+  const [filtersCollapsed, setFiltersCollapsed] = React.useState(false);
+  const [openDetail, setOpenDetail] = React.useState<Record<string, boolean>>({});
+  const originStations = React.useMemo(() => {
+    if (origin === '上海') return ['上海虹桥','上海','上海南'];
+    if (origin === '北京') return ['北京南','北京','北京西'];
+    return origin ? [origin] : [];
+  }, [origin]);
+  const destStations = React.useMemo(() => {
+    if (dest === '上海') return ['上海虹桥','上海','上海南'];
+    if (dest === '北京') return ['北京南','北京','北京西'];
+    return dest ? [dest] : [];
+  }, [dest]);
+  const [checkedOriginStations, setCheckedOriginStations] = React.useState<string[]>([]);
+  const [checkedDestStations, setCheckedDestStations] = React.useState<string[]>([]);
+  React.useEffect(()=>{ setCheckedOriginStations(originStations); }, [originStations]);
+  React.useEffect(()=>{ setCheckedDestStations(destStations); }, [destStations]);
 
    const [data, setData] = React.useState<Train[]>([]);
-   React.useEffect(()=>{
-     const q: SearchQuery = { origin, dest, date, hs, stu };
-     fetchTrains(q).then(setData);
-   }, [origin, dest, date, hs, stu]);
+  React.useEffect(()=>{
+    const q: SearchQuery = { origin, dest, date, hs, stu };
+    fetchTrains(q).then(setData);
+  }, [origin, dest, date, hs, stu]);
 
    // 计算中转换乘候选
    React.useEffect(() => {
@@ -192,87 +195,9 @@ import { popularCities } from '../constants/cities';
 
 
    // 新增：使用所选席别生成订单草稿
-   const handleBookWithSeat = (train: Train, seatType: 'sw'|'ydz'|'edz') => {
-     const totalAvail = (train.types.sw ?? 0) + (train.types.ydz ?? 0) + (train.types.edz ?? 0) + (train.types.wz ?? 0);
-     if (totalAvail <= 0) {
-       const qs = `origin=${encodeURIComponent(origin)}&dest=${encodeURIComponent(dest)}&date=${encodeURIComponent(date)}&train=${encodeURIComponent(train.code)}`;
-       navigate(`/standby?${qs}`);
-       return;
-     }
-     if (!isDepartValidToday) { alert('出发日期不能早于今天'); return; }
-     const departMs = combineLocalDateTimeMs(date, train.depart);
-     if (departMs - Date.now() < 30 * 60 * 1000) { alert('距发车不足30分钟，停止售票'); return; }
-     if (!isLoggedIn()) {
-       navigate('/login', { state: { from: '/results' } });
-       return;
-     }
-     const session = getSession();
-     const basePrice = train.price[seatType] ?? 0;
-     const price = Math.round(basePrice * (stu ? 0.9 : 1));
-     const order: Order = {
-       id: 'O' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-       origin,
-       dest,
-       date,
-       passengers: [{ name: session?.username || '乘客', idType: 'ID', idNo: '' }],
-       item: { trainCode: train.code, seatType, price },
-       status: 'pending',
-       createdAt: Date.now(),
-     };
-     addOrder(order);
-     // 扣减库存：所选席别余票 - 乘客人数
-    decrementInventory(train.code, seatType as import('../types/train').SeatType, order.passengers.length);
-     navigate(`/checkout/${order.id}`);
-   };
+  // 下单逻辑移动到 /checkout/new 页面
 // 新增：往返下单（生成两笔订单）
-const handleBookRoundTrip = async (train: Train, seatType: 'sw'|'ydz'|'edz') => {
-  if (ticketType !== 'roundtrip') { return; }
-  if (!returnDate) { alert('请选择返程日期'); return; }
-  if (!isDateAfterStrict(returnDate, date)) { alert('返程日期必须晚于出发日期'); return; }
-  if (!isDepartValidToday) { alert('出发日期不能早于今天'); return; }
-  const departMs = combineLocalDateTimeMs(date, train.depart);
-  if (departMs - Date.now() < 30 * 60 * 1000) { alert('距发车不足30分钟，停止售票'); return; }
-  if (!isLoggedIn()) { navigate('/login', { state: { from: '/results' } }); return; }
-  const session = getSession();
-  const groupId = 'G' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
-  // 去程
-  const priceGo = Math.round((train.price[seatType] ?? 0) * (stu ? 0.9 : 1));
-  const orderGo: Order = {
-    id: 'O' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-    origin,
-    dest,
-    date,
-    passengers: [{ name: session?.username || '乘客', idType: 'ID', idNo: '' }],
-    item: { trainCode: train.code, seatType, price: priceGo },
-    status: 'pending',
-    createdAt: Date.now(),
-    groupId,
-  };
-  addOrder(orderGo);
-  decrementInventory(train.code, seatType as import('../types/train').SeatType, orderGo.passengers.length);
-  // 返程：选择首个有票的列车
-  const retList = await fetchTrains({ origin: dest, dest: origin, date: returnDate, hs, stu });
-  const retTrain = retList.find(rt => ((rt.types.sw??0)+(rt.types.ydz??0)+(rt.types.edz??0)+(rt.types.wz??0))>0);
-  if (retTrain) {
-    const picked = pickSeatAndPrice(retTrain);
-    const orderBack: Order = {
-      id: 'O' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-      origin: dest,
-      dest: origin,
-      date: returnDate,
-      passengers: [{ name: session?.username || '乘客', idType: 'ID', idNo: '' }],
-      item: { trainCode: retTrain.code, seatType: picked.seatType, price: Math.round((picked.price ?? 0) * (stu ? 0.9 : 1)) },
-      status: 'pending',
-      createdAt: Date.now(),
-      groupId,
-    };
-    addOrder(orderBack);
-    decrementInventory(retTrain.code, picked.seatType as import('../types/train').SeatType, orderBack.passengers.length);
-  } else {
-    alert('返程暂无合适车次，已为您保留去程订单');
-  }
-  navigate(`/checkout/${orderGo.id}`);
-};
+// 往返与联程逻辑暂保持原有入口
 // 新增：联程（中转换乘）下单（两笔订单）
 const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
   if (!isDepartValidToday) { alert('出发日期不能早于今天'); return; }
@@ -312,19 +237,118 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
   navigate(`/checkout/${orderA.id}`);
 };
 
-   return (
-     <div className="results-page">
-       <div className="summary">{origin || '出发地'} → {dest || '目的地'} · {date || '出发日期'} {ticketType==='roundtrip' ? `· 往返${returnDate ? '（返程 '+returnDate+'）':''}` : ''} {hs? '· 高铁动车':''} {stu? '· 学生票九折':''}</div>
-       <div className="filters">
-         <label>席别：
-           <select value={seatFilter} onChange={e=>setSeatFilter(e.target.value as ('all'|'sw'|'ydz'|'edz'|'wz'))}>
-             <option value="all">全部</option>
-             <option value="sw">商务座</option>
-             <option value="ydz">一等座</option>
-             <option value="edz">二等座</option>
-             <option value="wz">无座</option>
-           </select>
-         </label>
+  return (
+    <div className="results-page">
+      <div className="searchbar">
+        <div className="row">
+          <div className="radio-group">
+            <label><input type="radio" name="ticketType" value="oneway" checked={ticketType==='oneway'} onChange={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType:'oneway' }).toString()}`)} /> 单程</label>
+            <label><input type="radio" name="ticketType" value="roundtrip" checked={ticketType==='roundtrip'} onChange={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType:'roundtrip', ...(returnDate?{returnDate}:{}) }).toString()}`)} /> 往返</label>
+          </div>
+          <div className="fields">
+            <input className="input" value={origin} onChange={e=>navigate(`/results?${new URLSearchParams({ origin: e.target.value, dest, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} placeholder="出发地" />
+            <span className="swap">→</span>
+            <input className="input" value={dest} onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest: e.target.value, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} placeholder="目的地" />
+            <input type="date" className="input" value={date} onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest, date: e.target.value, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} />
+            {ticketType==='roundtrip' && (
+              <input type="date" className="input" value={returnDate} min={date || undefined} onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest, date, returnDate: e.target.value, hs: hs? '1':'0', stu: stu? '1':'0', ticketType }).toString()}`)} />
+            )}
+            <div className="radio-group" style={{marginLeft:12}}>
+              <label><input type="radio" name="stu" checked={!stu} onChange={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs?'1':'0', stu:'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} /> 普通</label>
+              <label><input type="radio" name="stu" checked={stu} onChange={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs?'1':'0', stu:'1', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} /> 学生</label>
+            </div>
+            <button className="search-btn" onClick={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs?'1':'0', stu: stu?'1':'0', ticketType, ...(ticketType==='roundtrip' && returnDate ? { returnDate } : {}) }).toString()}`)}>查询</button>
+          </div>
+        </div>
+        <div className="tabs-panel">
+          <div className="tabs-header">
+            <div className="tabs-head-scroll">
+              {Array.from({length:14}).map((_,i)=>{
+                const base = new Date(date || todayLocalISO());
+                base.setDate(base.getDate()+i);
+                const off = base.getTimezoneOffset()*60000;
+                const dstr = new Date(base.getTime()-off).toISOString().split('T')[0];
+                const disp = `${String(base.getMonth()+1).padStart(2,'0')}-${String(base.getDate()).padStart(2,'0')} ${['周日','周一','周二','周三','周四','周五','周六'][base.getDay()]}`;
+                const active = dstr===date;
+                return (
+                  <button key={i} className={"tab"+(active?" active":"")} onClick={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date: dstr, hs: hs?'1':'0', stu: stu?'1':'0', ticketType, ...(ticketType==='roundtrip' && returnDate ? { returnDate } : {}) }).toString()}`)}>{disp}</button>
+                );
+              })}
+            </div>
+            <span className="header-right">
+              <label>发车时间：</label>
+              <select value={departSlot} onChange={e=>setDepartSlot(e.target.value as ('all'|'0-6'|'6-12'|'12-18'|'18-24'))}>
+                <option value="all">00:00~24:00</option>
+                <option value="0-6">00:00~06:00</option>
+                <option value="6-12">06:00~12:00</option>
+                <option value="12-18">12:00~18:00</option>
+                <option value="18-24">18:00~24:00</option>
+              </select>
+            </span>
+          </div>
+          {!filtersCollapsed && (
+            <div className="tabs-body">
+              <div className="summary-line">{origin || '出发地'} → {dest || '目的地'}（{date || todayLocalISO()}）</div>
+              <div className="checkbox-rows">
+              <div className="row-line">
+                <div className="row-title">车次类型：</div>
+                <button className="row-all" onClick={()=>setTypeFilter({G:true,D:true})}>全选</button>
+                <label className="row-check"><input type="checkbox" checked={typeFilter.G} onChange={e=>setTypeFilter(p=>({ ...p, G: e.target.checked }))} />GC-高铁/城际</label>
+                <label className="row-check"><input type="checkbox" checked={typeFilter.D} onChange={e=>setTypeFilter(p=>({ ...p, D: e.target.checked }))} />D-动车</label>
+                <label className="row-check disabled"><input type="checkbox" disabled />Z-直达</label>
+                <label className="row-check disabled"><input type="checkbox" disabled />T-特快</label>
+                <label className="row-check disabled"><input type="checkbox" disabled />K-快速</label>
+                <label className="row-check disabled"><input type="checkbox" disabled />其他</label>
+                <label className="row-check disabled"><input type="checkbox" disabled />复兴号</label>
+                <label className="row-check disabled"><input type="checkbox" disabled />智能动车组</label>
+              </div>
+              <div className="row-line">
+                <div className="row-title">出发车站：</div>
+                <button className="row-all" onClick={()=>setCheckedOriginStations(originStations)}>全选</button>
+                {originStations.map(s => (
+                  <label key={s} className="row-check"><input type="checkbox" checked={checkedOriginStations.includes(s)} onChange={e=>{
+                    if (e.target.checked) setCheckedOriginStations(prev => Array.from(new Set([...prev, s])));
+                    else setCheckedOriginStations(prev => prev.filter(x=>x!==s));
+                  }} />{s}</label>
+                ))}
+              </div>
+              <div className="row-line">
+                <div className="row-title">到达车站：</div>
+                <button className="row-all" onClick={()=>setCheckedDestStations(destStations)}>全选</button>
+                {destStations.map(s => (
+                  <label key={s} className="row-check"><input type="checkbox" checked={checkedDestStations.includes(s)} onChange={e=>{
+                    if (e.target.checked) setCheckedDestStations(prev => Array.from(new Set([...prev, s])));
+                    else setCheckedDestStations(prev => prev.filter(x=>x!==s));
+                  }} />{s}</label>
+                ))}
+              </div>
+              <div className="row-line">
+                <div className="row-title">车次席别：</div>
+                <button className="row-all" onClick={()=>setSeatFilter('all')}>全部</button>
+                <label className="row-check"><input type="checkbox" checked={seatFilter==='sw'} onChange={()=>setSeatFilter('sw')} />商务座</label>
+                <label className="row-check"><input type="checkbox" checked={seatFilter==='ydz'} onChange={()=>setSeatFilter('ydz')} />一等座</label>
+                <label className="row-check"><input type="checkbox" checked={seatFilter==='edz'} onChange={()=>setSeatFilter('edz')} />二等座</label>
+                <label className="row-check disabled"><input type="checkbox" disabled />软卧</label>
+                <label className="row-check disabled"><input type="checkbox" disabled />硬卧</label>
+              </div>
+              </div>
+            </div>
+          )}
+          <div className="panel-footer">
+            <button className="collapse-toggle" onClick={()=>setFiltersCollapsed(v=>!v)}>筛选</button>
+          </div>
+        </div>
+      </div>
+      <div className="filters flat">
+        <label>席别：
+          <select value={seatFilter} onChange={e=>setSeatFilter(e.target.value as ('all'|'sw'|'ydz'|'edz'|'wz'))}>
+            <option value="all">全部</option>
+            <option value="sw">商务座</option>
+            <option value="ydz">一等座</option>
+            <option value="edz">二等座</option>
+            <option value="wz">无座</option>
+          </select>
+        </label>
          <label>排序：
            <select value={sortBy} onChange={e=>setSortBy(e.target.value as ('depart'|'arrive'|'duration'|'price'))}>
              <option value="depart">出发时间升序</option>
@@ -356,57 +380,62 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
         </label>
       </div>
 
-       <table className="list">
-         <thead>
-           <tr>
-             <th>车次</th><th>出发-到达</th><th>历时</th><th>商务座</th><th>一等座</th><th>二等座</th><th>无座</th><th>操作</th>
-           </tr>
-         </thead>
-         <tbody>
-           {sorted.map((r)=> (
-             <tr key={r.code}>
-               <td>{r.code}</td>
-               <td>{r.depart} - {r.arrive}</td>
-               <td>{r.duration}</td>
-               <td>{r.types.sw ?? '--'}</td>
-               <td>{r.types.ydz ?? '--'}</td>
-               <td>{r.types.edz ?? '--'}</td>
-               <td>{r.types.wz ?? '--'}</td>
-               <td>{(((r.types.sw ?? 0)+(r.types.ydz ?? 0)+(r.types.edz ?? 0)+(r.types.wz ?? 0))<=0) ? (
-                 <button className="primary" onClick={() => { const qs = `origin=${encodeURIComponent(origin)}&dest=${encodeURIComponent(dest)}&date=${encodeURIComponent(date)}&train=${encodeURIComponent(r.code)}`; navigate(`/standby?${qs}`); }}>候补</button>
-               ) : (
-                 (() => {
-                   const selected = selectedSeats[r.code] ?? defaultSelectableSeat(r);
-                   const setSelected = (val: 'sw'|'ydz'|'edz') => setSelectedSeats(prev => ({ ...prev, [r.code]: val }));
-                   const swLabel = `商务座${r.price.sw? ' ￥'+Math.round(r.price.sw * (stu ? 0.9 : 1)):''}（余票${r.types.sw ?? 0}）`;
-                   const ydzLabel = `一等座${r.price.ydz? ' ￥'+Math.round(r.price.ydz * (stu ? 0.9 : 1)):''}（余票${r.types.ydz ?? 0}）`;
-                   const edzLabel = `二等座${r.price.edz? ' ￥'+Math.round(r.price.edz * (stu ? 0.9 : 1)):''}（余票${r.types.edz ?? 0}）`;
-                   const selectedAvail = (r.types[selected] ?? 0);
-                   return (
-                     <span style={{display:'inline-flex', gap:8, alignItems:'center'}}>
-                       <select value={selected} onChange={e => setSelected(e.target.value as 'sw'|'ydz'|'edz')}>
-                         <option value="sw" disabled={(r.types.sw ?? 0) <= 0}>{swLabel}</option>
-                         <option value="ydz" disabled={(r.types.ydz ?? 0) <= 0}>{ydzLabel}</option>
-                         <option value="edz" disabled={(r.types.edz ?? 0) <= 0}>{edzLabel}</option>
-                       </select>
-                       {(() => { const isSaleCutoff = (combineLocalDateTimeMs(date, r.depart) - Date.now() < 30*60*1000);
-                         return (
-                           <>
-                             <button className="primary" disabled={selectedAvail <= 0 || !isDepartValidToday || isSaleCutoff} title={isSaleCutoff ? '距发车不足30分钟，已截止售票' : undefined} onClick={() => handleBookWithSeat(r, selected)}>{isSaleCutoff ? '已截止' : '预订'}</button>
-                             {ticketType === 'roundtrip' && (
-                               <button className="secondary" disabled={selectedAvail <= 0 || !returnDate || !isValidRoundtripDate || !isDepartValidToday || isSaleCutoff} title={isSaleCutoff ? '距发车不足30分钟，已截止售票' : undefined} onClick={() => handleBookRoundTrip(r, selected)}>{isSaleCutoff ? '已截止' : '预订往返'}</button>
-                             )}
-                           </>
-                         );
-                       })()}
-                     </span>
-                   );
-                 })()
-               )}</td>
-             </tr>
-           ))}
-           </tbody>
-         </table>
+      <table className="list flat">
+        <thead>
+          <tr>
+            <th>车次</th>
+            <th>出发站/到达站</th>
+            <th>出发时间/到达时间</th>
+            <th>历时</th>
+            <th>商务座</th>
+            <th>一等座</th>
+            <th>二等座</th>
+            <th>无座</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((r)=> (
+            <React.Fragment key={r.code}>
+            <tr>
+              <td><a className="train-code" href="#" onClick={(e)=>{e.preventDefault(); setOpenDetail(p=>({ ...p, [r.code]: !p[r.code] }));}}>{r.code}</a></td>
+              <td>{origin} → {dest}</td>
+              <td>{r.depart} → {r.arrive}</td>
+              <td>{r.duration}</td>
+              <td className={((r.types.sw??0)>0)?'ok':'none'}>{(r.types.sw??0)>0?'有':'--'}</td>
+              <td className={((r.types.ydz??0)>0)?'ok':'none'}>{(r.types.ydz??0)>0?'有':'--'}</td>
+              <td className={((r.types.edz??0)>0)?'ok':'none'}>{(r.types.edz??0)>0?'有':'--'}</td>
+              <td className={((r.types.wz??0)>0)?'ok':'none'}>{(r.types.wz??0)>0?'有':'--'}</td>
+              <td>{(((r.types.sw ?? 0)+(r.types.ydz ?? 0)+(r.types.edz ?? 0)+(r.types.wz ?? 0))<=0) ? (
+                <button className="primary" onClick={() => { const qs = `origin=${encodeURIComponent(origin)}&dest=${encodeURIComponent(dest)}&date=${encodeURIComponent(date)}&train=${encodeURIComponent(r.code)}`; navigate(`/standby?${qs}`); }}>候补</button>
+              ) : (
+                (() => { const isSaleCutoff = (combineLocalDateTimeMs(date, r.depart) - Date.now() < 30*60*1000);
+                  return (
+                    <span style={{display:'inline-flex', gap:8, alignItems:'center'}}>
+                      <button className="primary" disabled={!isDepartValidToday || isSaleCutoff} title={isSaleCutoff ? '距发车不足30分钟，已截止售票' : undefined} onClick={() => navigate(`/checkout/new?origin=${encodeURIComponent(origin)}&dest=${encodeURIComponent(dest)}&date=${encodeURIComponent(date)}&train=${encodeURIComponent(r.code)}&stu=${stu?'1':'0'}`)}>{isSaleCutoff ? '已截止' : '预订'}</button>
+                    </span>
+                  );
+                })()
+              )}</td>
+            </tr>
+            {openDetail[r.code] && (
+              <tr className="detail-row">
+                <td colSpan={9}>
+                  <div className="detail-box">
+                    <div className="detail-title">票价信息</div>
+                    <div className="detail-prices">
+                      <span className={((r.types.sw??0)>0)?'price-tag':'price-tag disabled'}>商务座 ￥{Math.round((r.price.sw ?? 0) * (stu ? 0.9 : 1))}</span>
+                      <span className={((r.types.ydz??0)>0)?'price-tag':'price-tag disabled'}>一等座 ￥{Math.round((r.price.ydz ?? 0) * (stu ? 0.9 : 1))}</span>
+                      <span className={((r.types.edz??0)>0)?'price-tag':'price-tag disabled'}>二等座 ￥{Math.round((r.price.edz ?? 0) * (stu ? 0.9 : 1))}</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            )}
+            </React.Fragment>
+          ))}
+          </tbody>
+        </table>
          <div className="hint">演示数据，仅用于界面展示。无票时会在此处显示候补入口。</div>
       {showTransfer && (
         <div style={{marginTop:24}}>
