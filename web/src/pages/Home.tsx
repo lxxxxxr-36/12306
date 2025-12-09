@@ -1,8 +1,9 @@
 import React from 'react';
-import './home.css';
 import { useNavigate } from 'react-router-dom';
+import Carousel from '../components/Carousel';
 import { popularCities } from '../constants/cities';
 import { isLoggedIn } from '../services/auth';
+import './home.css';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -15,8 +16,33 @@ const Home: React.FC = () => {
   const [ticketType, setTicketType] = React.useState<'oneway'|'roundtrip'>('oneway');
   const [returnDate, setReturnDate] = React.useState('');
   const todayLocalISO = (() => { const d = new Date(); d.setHours(0,0,0,0); const off = d.getTimezoneOffset()*60000; return new Date(d.getTime()-off).toISOString().split('T')[0]; })();
+
+  // 轮播图数据
+  const carouselItems = [
+    {
+      image: '/media/real-site-pic/banner20201223.jpg',
+      link: 'https://kyfw.12306.cn/otn/view/commutation_index.html'
+    },
+    {
+      image: '/media/real-site-pic/banner20200707.jpg',
+    },
+    {
+      image: '/media/real-site-pic/banner0619.jpg',
+    },
+    {
+      image: '/media/real-site-pic/banner26.jpg',
+      link: 'https://exservice.12306.cn/excater/index.html'
+    },
+    {
+      image: '/media/real-site-pic/banner10.jpg',
+      link: 'https://cx.12306.cn/tlcx/index.html'
+    },
+    {
+      image: '/media/real-site-pic/banner12.jpg',
+    },
+  ];
   // 默认日期设为今天
-  React.useEffect(() => { if (!date) setDate(todayLocalISO); }, []);
+  React.useEffect(() => { if (!date) setDate(todayLocalISO); }, [date, todayLocalISO]);
   // 登录后回填上次选择的出发地/到达地
   React.useEffect(() => {
     if (isLoggedIn()) {
@@ -67,12 +93,15 @@ const Home: React.FC = () => {
   }
 
   return (
-    <div className="home-page">
-      <div className="banner">
-        <h2>中国铁路12306</h2>
-        <p>官方购票·安全便捷</p>
-      </div>
-      <form className="search-card" onSubmit={handleSearch}>
+    <div>
+      <div className="home-page">
+        <Carousel items={carouselItems} autoPlay={true} interval={4000} />
+        <div className="content-wrapper">
+          <div className="banner">
+            <h2>中国铁路12306</h2>
+            <p>官方购票·安全便捷</p>
+          </div>
+          <form className="search-card" onSubmit={handleSearch}>
 
         <div className="row" style={{alignItems:'flex-end', gap:8}}>
           <div className="col">
@@ -149,7 +178,9 @@ const Home: React.FC = () => {
           <label><input type="checkbox" checked={onlyHighSpeed} onChange={e=>setOnlyHighSpeed(e.target.checked)} /> 高铁动车</label>
         </div>
         <button className="primary" type="submit">查 询</button>
-      </form>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

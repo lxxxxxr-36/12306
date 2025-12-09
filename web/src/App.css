@@ -25,7 +25,7 @@
 .divider { color: #999; margin: 0 8px; }
 .logout-link { background: transparent; border: none; color: #333; font-size: 14px; cursor: pointer; }
 
-main { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
+main { margin: 0px auto; }
 .site-footer { text-align: center; color: #666; padding: 24px 0; border-top: 1px solid #eaeaea; background: #fff; }
 
 /* 新增：主导航栏（位于“我的12306”下方） */
