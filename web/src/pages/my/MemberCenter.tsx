@@ -1,6 +1,15 @@
 import React, { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import '../member-center.css'
+import BasicInfo from './sections/BasicInfo'
+import Welcome from './sections/Welcome'
+import BeneficiariesList from './sections/BeneficiariesList'
+import AddBeneficiary from './sections/AddBeneficiary'
+import EditBeneficiary from './sections/EditBeneficiary'
+import PickPassengers from './sections/PickPassengers'
+import Notice from './sections/Notice'
+import AboutMember from './sections/AboutMember'
+import AboutPoints from './sections/AboutPoints'
 
 type Item = { group: string; key: string; label: string }
 
@@ -33,12 +42,15 @@ const MemberCenter: React.FC = () => {
   const location = useLocation()
   const sp = new URLSearchParams(location.search)
   const sub = sp.get('sub') || ''
+  const mode = sp.get('mode') || ''
   const active = useMemo(() => flatItems.find(i => i.key === sub), [sub])
   const [exclusiveOpen, setExclusiveOpen] = useState(false)
 
   const setSub = (key: string) => {
     const next = new URLSearchParams(location.search)
     if (key) next.set('sub', key); else next.delete('sub')
+    next.delete('mode');
+    next.delete('id');
     navigate({ pathname: '/member', search: next.toString() })
   }
 
@@ -72,7 +84,23 @@ const MemberCenter: React.FC = () => {
         </aside>
 
         <section className="mc-content">
-          <div className="mc-placeholder">{active ? `${active.label} 页面占位` : '会员中心页面'}</div>
+          {active ? (
+            active.key === 'profile' ? (
+              <BasicInfo />
+            ) : active.key === 'beneficiary' ? (
+              mode === 'add' ? <AddBeneficiary /> : mode === 'edit' ? <EditBeneficiary /> : mode === 'pick' ? <PickPassengers /> : <BeneficiariesList />
+            ) : active.key === 'notice' ? (
+              <Notice />
+            ) : active.key === 'about_member' ? (
+              <AboutMember />
+            ) : active.key === 'about_points' ? (
+              <AboutPoints />
+            ) : (
+              <div className="mc-placeholder">{`${active.label} 页面占位`}</div>
+            )
+          ) : (
+            <Welcome />
+          )}
         </section>
       </div>
 
