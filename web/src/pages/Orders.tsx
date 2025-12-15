@@ -80,6 +80,7 @@ const Orders: React.FC = () => {
             <th>行程</th>
             <th>出发日期</th>
             <th>乘客</th>
+            <th>座位</th>
             <th>金额</th>
             <th>状态</th>
             <th>操作</th>
@@ -92,6 +93,7 @@ const Orders: React.FC = () => {
               <td>{o.origin} → {o.dest} · {o.item.trainCode}</td>
               <td>{o.date}</td>
               <td>{o.passengers.map(p=>p.name||'乘客').join('、')}</td>
+              <td>{o.item.carriage ? `${o.item.carriage}车厢 ${o.item.seatNo || ''}` : (o.item.seatNo || '--')}</td>
               <td>{o.item.price} 元</td>
               <td>{o.status}</td>
               <td>
