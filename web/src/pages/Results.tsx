@@ -264,7 +264,7 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
       if (!returnDate) { alert('请选择返程日期'); return; }
       const depart = new Date(date);
       const back = new Date(returnDate);
-      if (!(back.getTime() > depart.getTime())) { alert('返程日期必须晚于出发日期'); return; }
+      if (back.getTime() < depart.getTime()) { alert('返程日期不能早于出发日期'); return; }
     }
     const qs = new URLSearchParams({
       origin,
