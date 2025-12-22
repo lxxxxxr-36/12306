@@ -78,7 +78,7 @@ const Orders: React.FC = () => {
       {op ? (
         <div style={{margin:'8px 0', padding:'8px 12px', background:'#fff8e1', border:'1px solid #ffe082', borderRadius:4, color:'#8d6e63'}}>
           {op === 'refund' ? '请在已支付订单中点击“退票”进行退票' :
-           op === 'reschedule' ? '请在符合条件的订单中点击“改签”并选择新的出发日期' :
+           op === 'reschedule' ? '请在符合条件的订单中点击“改签”并选择新的出发日期（每张票仅可改签一次；已变更到站的车票不可改签；开车前不足48小时仅可改签到票面日期当日或更早）' :
            op === 'change_dest' ? '请在符合条件的订单中点击“变更到站”并选择新的到达地' :
            '请选择需要操作的订单'}
         </div>

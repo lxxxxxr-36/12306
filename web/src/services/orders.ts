@@ -109,29 +109,49 @@ export function changeOrderDest(id: string, newDest: string): Order | undefined 
     }
   }
   const list = read();
-  const next = list.map<Order>(o => (o.id === id ? { ...o, dest: newDest } : o));
+  const next = list.map<Order>(o => (o.id === id ? { ...o, dest: newDest, changeDestCount: (o.changeDestCount ?? 0) + 1 } : o));
   write(next);
   dispatchOrdersChange(next);
   return next.find(o => o.id === id);
 }
 
-// 改签（同车次同席别，仅改出发日期）：待支付或已支付且未发车
+// 改签（同车次同席别，仅改出发日期）
+// 规则（对齐12306官网的简化实现）：
+// - 每张票仅可改签一次（rescheduleCount<1）
+// - 已办理“变更到站”的车票不再办理改签（changeDestCount>0 禁止）
+// - 新日期不得早于当天
+// - 时间窗口：
+//   * 开车前48小时及以上：允许改签至预售期内其他日期（此处不限制上限）
+//   * 开车前不足48小时：仅允许改签至票面日期当日或更早的日期（不允许改签到票面日期之后的日期）
+//   * 开车后至票面日期当日24:00：仅允许当日（同一日期）范围；由于本系统仅记录日期，不支持时刻改签，故仅允许同日改签（等效为限制）
 export function rescheduleOrderDate(id: string, newDate: string): Order | undefined {
   const order = getOrder(id);
   if (!order) return undefined;
   if (!newDate || newDate === order.date) return order;
   const todayLocalISO = (() => { const d = new Date(); d.setHours(0,0,0,0); const off = d.getTimezoneOffset()*60000; return new Date(d.getTime()-off).toISOString().split('T')[0]; })();
   if (newDate < todayLocalISO) return undefined; // 不允许改签到过去
+  if ((order.rescheduleCount ?? 0) >= 1) return undefined; // 仅允许一次改签
+  if ((order.changeDestCount ?? 0) > 0) return undefined; // 已变更到站不允许改签
   const train = getTrainByCode(order.item.trainCode);
-  if (order.status === 'paid' && train) {
-    const departMs = combineLocalDateTimeMs(order.date, train.depart);
-    if (departMs <= Date.now()) {
-      // 已发车不允许改签
-      return undefined;
+  const departMs = train ? combineLocalDateTimeMs(order.date, train.depart) : 0;
+  const now = Date.now();
+  if (departMs > 0) {
+    const msLeft = departMs - now;
+    const hoursLeft = msLeft / (60 * 60 * 1000);
+    if (msLeft > 0) {
+      // 未发车
+      if (hoursLeft < 48) {
+        // 不足48小时：不允许改签到票面日期之后
+        if (newDate > order.date) return undefined;
+      }
+      // >=48小时：允许到任何未来日期（此处不限制预售期上限）
+    } else {
+      // 已发车：仅允许同日（系统仅日期维度）
+      if (newDate !== order.date) return undefined;
     }
   }
   const list = read();
-  const next = list.map<Order>(o => (o.id === id ? { ...o, date: newDate } : o));
+  const next = list.map<Order>(o => (o.id === id ? { ...o, date: newDate, rescheduleCount: (o.rescheduleCount ?? 0) + 1 } : o));
   write(next);
   dispatchOrdersChange(next);
   return next.find(o => o.id === id);
