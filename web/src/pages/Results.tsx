@@ -82,6 +82,7 @@ import { popularCities } from '../constants/cities';
   const ticketType = (params.get('ticketType') as ('oneway'|'roundtrip') | null) || 'oneway';
   const returnDate = params.get('returnDate') || '';
   const doSearch = params.get('search') === '1';
+  const transferParam = params.get('transfer');
   const [originFocus, setOriginFocus] = React.useState(false);
   const [destFocus, setDestFocus] = React.useState(false);
  // roundtrip 校验移至后续表单
@@ -90,7 +91,12 @@ import { popularCities } from '../constants/cities';
    const [seatFilter, setSeatFilter] = React.useState<'all'|'sw'|'ydz'|'edz'|'wz'>('all');
    // 新增：记录每个车次的所选席别（商务/一等/二等）
   // 新增：中转换乘
-   const [showTransfer, setShowTransfer] = React.useState(false);
+  const [showTransfer, setShowTransfer] = React.useState(transferParam === '1' || transferParam === 'true');
+  React.useEffect(() => {
+    const p = new URLSearchParams(search);
+    const t = p.get('transfer');
+    setShowTransfer(t === '1' || t === 'true');
+  }, [search]);
    const [transferOptions, setTransferOptions] = React.useState<Array<{ mid: string; a: Train; b: Train }>>([]);
    const [loadingTransfer, setLoadingTransfer] = React.useState(false);
   // 新增：更贴近12306的筛选项

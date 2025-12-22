@@ -1,12 +1,14 @@
 import React from 'react';
 import type { Order } from '../types/order';
 import { getOrders, cancelOrder, refundOrder, changeOrderDest, rescheduleOrderDate } from '../services/orders';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { popularCities } from '../constants/cities';
 
 const Orders: React.FC = () => {
   const [orders, setOrders] = React.useState<Order[]>([]);
   const navigate = useNavigate();
+  const { search } = useLocation();
+  const op = React.useMemo(() => new URLSearchParams(search).get('op'), [search]);
   React.useEffect(()=>{
     setOrders(getOrders());
     const handleOrdersChange = () => setOrders(getOrders());
@@ -73,6 +75,14 @@ const Orders: React.FC = () => {
   return (
     <div className="orders-page">
       <h2>订单中心</h2>
+      {op ? (
+        <div style={{margin:'8px 0', padding:'8px 12px', background:'#fff8e1', border:'1px solid #ffe082', borderRadius:4, color:'#8d6e63'}}>
+          {op === 'refund' ? '请在已支付订单中点击“退票”进行退票' :
+           op === 'reschedule' ? '请在符合条件的订单中点击“改签”并选择新的出发日期' :
+           op === 'change_dest' ? '请在符合条件的订单中点击“变更到站”并选择新的到达地' :
+           '请选择需要操作的订单'}
+        </div>
+      ) : null}
       <table className="orders-table">
         <thead>
           <tr>

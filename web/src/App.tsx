@@ -88,7 +88,7 @@ function App() {
                           <div>
                             <NavLink to="/results?ticketType=oneway" className="dd-item" onClick={() => setOpenMenu(null)}>单程</NavLink>
                             <NavLink to="/results?ticketType=roundtrip" className="dd-item" onClick={() => setOpenMenu(null)}>往返</NavLink>
-                            <NavLink to="/stub/transfer" className="dd-item" onClick={() => setOpenMenu(null)}>中转换乘</NavLink>
+                            <NavLink to="/results?transfer=1" className="dd-item" onClick={() => setOpenMenu(null)}>中转换乘</NavLink>
                           </div>
                         </div>
                       </div>
@@ -96,9 +96,9 @@ function App() {
                         <div className="dd-title">变更</div>
                         <div className="dd-nested">
                           <div>
-                            <NavLink to="/stub/refund" className="dd-item" onClick={() => setOpenMenu(null)}>退票</NavLink>
-                            <NavLink to="/stub/reschedule" className="dd-item" onClick={() => setOpenMenu(null)}>改签</NavLink>
-                            <NavLink to="/stub/change_station" className="dd-item" onClick={() => setOpenMenu(null)}>变更到站</NavLink>
+                            <NavLink to="/orders?op=refund" className="dd-item" onClick={() => setOpenMenu(null)}>退票</NavLink>
+                            <NavLink to="/orders?op=reschedule" className="dd-item" onClick={() => setOpenMenu(null)}>改签</NavLink>
+                            <NavLink to="/orders?op=change_dest" className="dd-item" onClick={() => setOpenMenu(null)}>变更到站</NavLink>
                           </div>
                         </div>
                       </div>
