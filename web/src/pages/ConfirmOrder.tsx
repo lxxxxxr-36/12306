@@ -294,7 +294,7 @@ const ConfirmOrder: React.FC = () => {
                 <div style={{marginTop:12, display:'flex', justifyContent:'center', gap:20}}>
                   <button onClick={()=>{ setShowSeatModal(false); }}>返回修改</button>
                   <button className="primary" style={{background:'#FF7A00'}} onClick={()=>{
-                    // 生成订单，席位按选择或随机
+                    const groupId = 'G' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
                     pendingRows.forEach((r, idx) => {
                       const letter = seatChoices[idx] || seatLetters[Math.floor(Math.random()*seatLetters.length)];
                       const rowNo = Math.floor(Math.random()*20) + 1;
@@ -306,12 +306,14 @@ const ConfirmOrder: React.FC = () => {
                         item: { trainCode: trainCode, seatType: r.seatType, carriage: Math.floor(Math.random()*8)+1, seatNo: `${rowNo}${letter}`, price: ticketPrice },
                         status: 'pending',
                         createdAt: Date.now(),
+                        groupId,
                       };
                       addOrder(order);
                     });
                     decrementInventory(trainCode, pendingRows[0]?.seatType as import('../types/train').SeatType, pendingRows.length);
                     setShowSeatModal(false);
-                    navigate('/orders');
+                    const url = `/pay?group=${encodeURIComponent(groupId)}&origin=${encodeURIComponent(origin)}&dest=${encodeURIComponent(dest)}&date=${encodeURIComponent(date)}&train=${encodeURIComponent(trainCode)}`;
+                    navigate(url);
                   }}>确认</button>
                 </div>
               </div>
@@ -335,8 +337,8 @@ const ConfirmOrder: React.FC = () => {
   const train = getTrainByCode(order.item.trainCode);
   const departMs = train ? combineLocalDateTimeMs(order.date, train.depart) : 0;
   const canRefundNow = departMs - Date.now() >= 60 * 60 * 1000;
-  const handlePay = () => { const paid = payOrder(order.id); if (paid) navigate('/orders', { replace: true }); };
-  const handleCancel = () => { cancelOrder(order.id); navigate('/orders', { replace: true }); };
+  const handlePay = () => { const paid = payOrder(order.id); if (paid) navigate('/my/orders/train', { replace: true }); };
+  const handleCancel = () => { cancelOrder(order.id); navigate('/my/orders/train', { replace: true }); };
   const handleRefund = () => { if (!canRefundNow) { alert('距发车不足1小时，无法退票'); return; } const res = refundOrder(order.id); if (!res) { alert('退票失败：距发车不足1小时或订单状态不支持'); } };
   return (
     <div style={{maxWidth:800, margin:'24px auto', padding:'0 16px'}}>
@@ -374,16 +376,16 @@ const ConfirmOrder: React.FC = () => {
           <>
 -            <button onClick={handleRefund} disabled={!canRefundNow}>申请退票</button>
 +            <button onClick={handleRefund} disabled={!canRefundNow} title={!canRefundNow ? '距发车不足1小时，已截止退票' : undefined}>{!canRefundNow ? '已截止' : '申请退票'}</button>
-             <button onClick={()=>navigate('/orders')}>返回订单中心</button>
+            <button onClick={()=>navigate('/my/orders/train')}>返回订单中心</button>
           </>
         ) : order.status === 'refunding' ? (
           <>
             <button disabled>退票处理中...</button>
-            <button onClick={()=>navigate('/orders')}>返回订单中心</button>
+            <button onClick={()=>navigate('/my/orders/train')}>返回订单中心</button>
           </>
         ) : (
           <>
-            <button onClick={()=>navigate('/orders')}>返回订单中心</button>
+            <button onClick={()=>navigate('/my/orders/train')}>返回订单中心</button>
           </>
         )}
       </div>

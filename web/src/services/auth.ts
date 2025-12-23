@@ -133,7 +133,7 @@ export async function verifyResetCode(req: VerifyCodeReq): Promise<{ok:boolean;m
   const dataRaw = localStorage.getItem(RESET_PREFIX+req.account);
   if (!dataRaw) return { ok:false, message:'请先发送验证码' };
   const data = JSON.parse(dataRaw);
-  if (Date.now() - data.ts > 120*1000) return { ok:false, message:'验证码已过期' };
+  if (Date.now() - data.ts > 60*1000) return { ok:false, message:'验证码已过期' };
   if (req.code !== data.code) return { ok:false, message:'验证码错误' };
   return { ok:true };
 }
@@ -150,7 +150,7 @@ export async function resetPassword(payload: ResetPayload): Promise<{ok:boolean;
   const dataRaw = localStorage.getItem(RESET_PREFIX+payload.account);
   if (!dataRaw) return { ok:false, message:'请先发送验证码' };
   const data = JSON.parse(dataRaw);
-  if (Date.now() - data.ts > 120*1000) return { ok:false, message:'验证码已过期' };
+  if (Date.now() - data.ts > 60*1000) return { ok:false, message:'验证码已过期' };
   if (payload.code !== data.code) return { ok:false, message:'验证码错误' };
   const users = getUsers();
   const idx = users.findIndex(u => u.username === payload.account || u.email === payload.account || u.phoneNumber === payload.account);

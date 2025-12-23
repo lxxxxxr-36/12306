@@ -14,6 +14,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import { useSession } from './hooks/useSession'
 import { logout } from './services/auth'
 import ConfirmOrder from './pages/ConfirmOrder'
+import PaymentPage from './pages/Payment'
 import PersonalCenter from './pages/my/PersonalCenter'
 import Membership from './pages/Membership'
 import MemberCenter from './pages/my/MemberCenter'
@@ -96,9 +97,9 @@ function App() {
                         <div className="dd-title">变更</div>
                         <div className="dd-nested">
                           <div>
-                            <NavLink to="/orders?op=refund" className="dd-item" onClick={() => setOpenMenu(null)}>退票</NavLink>
-                            <NavLink to="/orders?op=reschedule" className="dd-item" onClick={() => setOpenMenu(null)}>改签</NavLink>
-                            <NavLink to="/orders?op=change_dest" className="dd-item" onClick={() => setOpenMenu(null)}>变更到站</NavLink>
+                            <NavLink to="/my/orders/train" className="dd-item" onClick={() => setOpenMenu(null)}>退票</NavLink>
+                            <NavLink to="/my/orders/train" className="dd-item" onClick={() => setOpenMenu(null)}>改签</NavLink>
+                            <NavLink to="/my/orders/train" className="dd-item" onClick={() => setOpenMenu(null)}>变更到站</NavLink>
                           </div>
                         </div>
                       </div>
@@ -112,7 +113,7 @@ function App() {
                         </div>
                         <div className="dd-nested" style={{marginTop:8}}>
                           <div>
-                            <NavLink to="/orders" className="dd-item" onClick={() => setOpenMenu(null)}>订单中心</NavLink>
+                            <NavLink to="/my/orders/train" className="dd-item" onClick={() => setOpenMenu(null)}>订单中心</NavLink>
                             <NavLink to="/standby" className="dd-item" onClick={() => setOpenMenu(null)}>候补购票</NavLink>
                           </div>
                         </div>
@@ -276,7 +277,8 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot" element={<ForgotPassword />} />
           <Route path="/results" element={<Results />} />
-          <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+          <Route path="/orders" element={<Navigate to="/my/orders/train" replace />} />
+          <Route path="/pay" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
           <Route path="/checkout/:id" element={<ProtectedRoute><ConfirmOrder /></ProtectedRoute>} />
           <Route path="/standby" element={<Standby />} />
           <Route path="/my/*" element={<ProtectedRoute><PersonalCenter /></ProtectedRoute>} />
