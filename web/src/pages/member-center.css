@@ -18,8 +18,48 @@
 .mc-link:hover{ background:#f6f8fa; }
 .mc-link.active{ color:#2ea5ff; font-weight:600; }
 
-.mc-content{ background:#fff; border:1px solid #eaeaea; border-radius:8px; min-height:380px; display:flex; align-items:center; justify-content:center; }
-.mc-placeholder{ color:#9bbcee; font-size:18px; }
+.mc-content{ background:#fff; border:1px solid #eaeaea; border-radius:8px; min-height:380px; padding:16px 20px; }
+.mc-placeholder{ color:#9bbcee; font-size:18px; display:flex; align-items:center; justify-content:center; height:100%; }
+
+.mc-welcome{ display:flex; align-items:center; gap:12px; color:#333; margin-top:12px; }
+.mc-welcome .title{ font-weight:700; font-size:20px; color:#222; }
+.mc-welcome .sub{ color:#999; margin-top:6px; }
+.mc-welcome .icon{ width:40px; height:40px; display:flex; align-items:center; justify-content:center; }
+
+.bi-title{ display:flex; align-items:center; gap:8px; color:#333; font-weight:700; margin-bottom:16px; }
+.bi-title .bar{ width:3px; height:18px; background:#2ea5ff; }
+.bi-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:16px 60px; }
+.bi-row{ display:grid; grid-template-columns: 120px 1fr; align-items:center; }
+.bi-label{ color:#333; letter-spacing:6px; }
+.bi-value{ color:#000; }
+.bi-link{ color:#2ea5ff; cursor:pointer; }
+
+.mc-add{ background:#FF7A00; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-weight:600; cursor:pointer; }
+.mc-add-menu{ position:absolute; top:100%; left:0; background:#fff; border:1px solid #eaeaea; border-radius:6px; box-shadow:0 6px 16px rgba(0,0,0,0.08); display:flex; flex-direction:column; }
+.mc-add-menu button{ background:transparent; border:none; padding:8px 12px; text-align:left; cursor:pointer; }
+.mc-add-menu button:hover{ background:#f6f8fa; }
+
+.mc-table{ width:100%; border-collapse:collapse; }
+.mc-table th, .mc-table td{ border-bottom:1px solid #eee; padding:10px; text-align:left; color:#333; }
+.mc-icon{ background:transparent; border:none; cursor:pointer; margin-right:8px; }
+
+.mn-article{ color:#333; }
+.mn-title{ font-weight:700; font-size:20px; text-align:center; margin-top:4px; }
+.mn-sub{ color:#666; text-align:center; margin:8px 0 16px; }
+.mn-list{ counter-reset: sec; }
+.mn-list li{ margin-bottom:12px; }
+.mn-section{ line-height:1.8; }
+.mn-bullets{ margin-top:6px; color:#444; }
+.mn-bullets div{ margin:2px 0; }
+.mn-date{ text-align:right; color:#666; margin-top:12px; }
+
+/* 关于会员 */
+.am-badge{ display:inline-block; background:#2ea5ff; color:#fff; border-radius:8px; padding:8px 14px; font-weight:700; margin-bottom:12px; }
+.am-subtitle{ font-weight:700; color:#333; margin:16px 0 8px; }
+.am-list{ margin-left:18px; color:#333; }
+.am-list li{ margin:6px 0; line-height:1.8; }
+.am-paragraph{ color:#333; line-height:1.8; }
+.em-red{ color:#d93025; }
 
 .mc-modal-mask{ position:fixed; inset:0; background:rgba(0,0,0,0.25); display:flex; align-items:center; justify-content:center; z-index:1000; }
 .mc-modal{ background:#fff; border-radius:8px; padding:16px; width:320px; box-shadow:0 8px 24px rgba(0,0,0,0.15); text-align:center; }

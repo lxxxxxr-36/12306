@@ -72,22 +72,31 @@ import { popularCities } from '../constants/cities';
  }
  const Results: React.FC = () => {
    const { search } = useLocation();
-   const navigate = useNavigate();
-   const params = new URLSearchParams(search);
+  const navigate = useNavigate();
+  const params = new URLSearchParams(search);
   const origin = params.get('origin') || '';
   const dest = params.get('dest') || '';
   const date = params.get('date') || '';
   const hs = params.get('hs') === '1';
   const stu = params.get('stu') === '1';
   const ticketType = (params.get('ticketType') as ('oneway'|'roundtrip') | null) || 'oneway';
- const returnDate = params.get('returnDate') || '';
+  const returnDate = params.get('returnDate') || '';
+  const doSearch = params.get('search') === '1';
+  const transferParam = params.get('transfer');
+  const [originFocus, setOriginFocus] = React.useState(false);
+  const [destFocus, setDestFocus] = React.useState(false);
  // roundtrip 校验移至后续表单
   const isDepartValidToday = React.useMemo(() => !!date && date >= todayLocalISO(), [date]);
   const [sortBy, setSortBy] = React.useState<'depart'|'arrive'|'duration'|'price'>('depart');
    const [seatFilter, setSeatFilter] = React.useState<'all'|'sw'|'ydz'|'edz'|'wz'>('all');
    // 新增：记录每个车次的所选席别（商务/一等/二等）
   // 新增：中转换乘
-   const [showTransfer, setShowTransfer] = React.useState(false);
+  const [showTransfer, setShowTransfer] = React.useState(transferParam === '1' || transferParam === 'true');
+  React.useEffect(() => {
+    const p = new URLSearchParams(search);
+    const t = p.get('transfer');
+    setShowTransfer(t === '1' || t === 'true');
+  }, [search]);
    const [transferOptions, setTransferOptions] = React.useState<Array<{ mid: string; a: Train; b: Train }>>([]);
    const [loadingTransfer, setLoadingTransfer] = React.useState(false);
   // 新增：更贴近12306的筛选项
@@ -111,25 +120,28 @@ import { popularCities } from '../constants/cities';
   React.useEffect(()=>{ setCheckedOriginStations(originStations); }, [originStations]);
   React.useEffect(()=>{ setCheckedDestStations(destStations); }, [destStations]);
   React.useEffect(() => {
-    if (!date) {
+    if (!date || !origin || !dest || (ticketType === 'roundtrip' && !returnDate)) {
+      const today = todayLocalISO();
       const qs = new URLSearchParams({
-        origin,
-        dest,
-        date: todayLocalISO(),
+        origin: origin || '北京',
+        dest: dest || '成都',
+        date: today,
         hs: hs ? '1' : '0',
         stu: stu ? '1' : '0',
         ticketType,
-        ...(ticketType === 'roundtrip' && returnDate ? { returnDate } : {}),
+        ...(ticketType === 'roundtrip' ? { returnDate: returnDate || today } : {}),
+        search: '0',
       });
       navigate(`/results?${qs.toString()}` , { replace: true });
     }
-  }, [date]);
+  }, [date, origin, dest, returnDate, ticketType]);
 
-   const [data, setData] = React.useState<Train[]>([]);
+  const [data, setData] = React.useState<Train[]>([]);
   React.useEffect(()=>{
+    if (!doSearch) { setData([]); return; }
     const q: SearchQuery = { origin, dest, date, hs, stu };
     fetchTrains(q).then(setData);
-  }, [origin, dest, date, hs, stu]);
+  }, [origin, dest, date, hs, stu, doSearch]);
 
    // 计算中转换乘候选
    React.useEffect(() => {
@@ -258,7 +270,7 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
       if (!returnDate) { alert('请选择返程日期'); return; }
       const depart = new Date(date);
       const back = new Date(returnDate);
-      if (!(back.getTime() > depart.getTime())) { alert('返程日期必须晚于出发日期'); return; }
+      if (back.getTime() < depart.getTime()) { alert('返程日期不能早于出发日期'); return; }
     }
     const qs = new URLSearchParams({
       origin,
@@ -268,6 +280,7 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
       stu: stu ? '1' : '0',
       ticketType,
       ...(ticketType === 'roundtrip' && returnDate ? { returnDate } : {}),
+      search: '1',
     });
     navigate(`/results?${qs.toString()}`);
   };
@@ -277,16 +290,48 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
       <div className="searchbar">
         <div className="row">
           <div className="radio-group">
-            <label><input type="radio" name="ticketType" value="oneway" checked={ticketType==='oneway'} onChange={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType:'oneway' }).toString()}`)} /> 单程</label>
-            <label><input type="radio" name="ticketType" value="roundtrip" checked={ticketType==='roundtrip'} onChange={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType:'roundtrip', ...(returnDate?{returnDate}:{}) }).toString()}`)} /> 往返</label>
+            <label><input type="radio" name="ticketType" value="oneway" checked={ticketType==='oneway'} onChange={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType:'oneway', search:'0' }).toString()}`)} /> 单程</label>
+            <label><input type="radio" name="ticketType" value="roundtrip" checked={ticketType==='roundtrip'} onChange={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType:'roundtrip', ...(returnDate?{returnDate}:{}) , search:'0'}).toString()}`)} /> 往返</label>
           </div>
           <div className="fields">
-            <input className="input" value={origin} onChange={e=>navigate(`/results?${new URLSearchParams({ origin: e.target.value, dest, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} placeholder="出发地" />
+            <div style={{position:'relative'}}>
+              <input
+                className="input"
+                value={origin}
+                placeholder="出发地"
+                onFocus={e=>{ e.target.select(); setOriginFocus(true); }}
+                onBlur={()=>setTimeout(()=>setOriginFocus(false),120)}
+                onChange={e=>navigate(`/results?${new URLSearchParams({ origin: e.target.value, dest, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) , search:'0'}).toString()}`)}
+              />
+              {originFocus && (
+              <div className="suggestions">
+                {popularCities.map(c => (
+                  <button key={c} className="suggestion" onMouseDown={e=>e.preventDefault()} onClick={()=>navigate(`/results?${new URLSearchParams({ origin: c, dest, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) , search:'0'}).toString()}`)}>{c}</button>
+                ))}
+              </div>
+              )}
+            </div>
             <span className="swap">→</span>
-            <input className="input" value={dest} onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest: e.target.value, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} placeholder="目的地" />
-            <input type="date" className="input" value={date || todayLocalISO()} min={todayLocalISO()} onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest, date: e.target.value, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} />
+            <div style={{position:'relative'}}>
+              <input
+                className="input"
+                value={dest}
+                placeholder="目的地"
+                onFocus={e=>{ e.target.select(); setDestFocus(true); }}
+                onBlur={()=>setTimeout(()=>setDestFocus(false),120)}
+                onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest: e.target.value, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) , search:'0'}).toString()}`)}
+              />
+              {destFocus && (
+              <div className="suggestions">
+                {popularCities.map(c => (
+                  <button key={c} className="suggestion" onMouseDown={e=>e.preventDefault()} onClick={()=>navigate(`/results?${new URLSearchParams({ origin, dest: c, date, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) , search:'0'}).toString()}`)}>{c}</button>
+                ))}
+              </div>
+              )}
+            </div>
+            <input type="date" className="input" value={date || todayLocalISO()} min={todayLocalISO()} onFocus={e=>{ /* 原生会弹日历 */ }} onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest, date: e.target.value, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, ...(returnDate?{returnDate}:{}) , search:'0'}).toString()}`)} />
             {ticketType==='roundtrip' && (
-              <input type="date" className="input" value={returnDate} min={date || undefined} onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest, date, returnDate: e.target.value, hs: hs? '1':'0', stu: stu? '1':'0', ticketType }).toString()}`)} />
+              <input type="date" className="input" value={returnDate || date || todayLocalISO()} min={date || undefined} onChange={e=>navigate(`/results?${new URLSearchParams({ origin, dest, date, returnDate: e.target.value, hs: hs? '1':'0', stu: stu? '1':'0', ticketType, search:'0' }).toString()}`)} />
             )}
             <div className="radio-group" style={{marginLeft:12}}>
               <label><input type="radio" name="stu" checked={!stu} onChange={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date, hs: hs?'1':'0', stu:'0', ticketType, ...(returnDate?{returnDate}:{}) }).toString()}`)} /> 普通</label>
@@ -298,15 +343,15 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
         <div className="tabs-panel">
           <div className="tabs-header">
             <div className="tabs-head-scroll">
-              {Array.from({length:14}).map((_,i)=>{
-                const base = new Date(date || todayLocalISO());
+              {Array.from({length:15}).map((_,i)=>{
+                const base = new Date(todayLocalISO());
                 base.setDate(base.getDate()+i);
                 const off = base.getTimezoneOffset()*60000;
                 const dstr = new Date(base.getTime()-off).toISOString().split('T')[0];
                 const disp = `${String(base.getMonth()+1).padStart(2,'0')}-${String(base.getDate()).padStart(2,'0')} ${['周日','周一','周二','周三','周四','周五','周六'][base.getDay()]}`;
                 const active = dstr===date;
                 return (
-                  <button key={i} className={"tab"+(active?" active":"")} onClick={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date: dstr, hs: hs?'1':'0', stu: stu?'1':'0', ticketType, ...(ticketType==='roundtrip' && returnDate ? { returnDate } : {}) }).toString()}`)}>{disp}</button>
+                  <button key={i} className={"tab"+(active?" active":"")} onClick={()=>navigate(`/results?${new URLSearchParams({ origin, dest, date: dstr, hs: hs?'1':'0', stu: stu?'1':'0', ticketType, ...(ticketType==='roundtrip' && returnDate ? { returnDate } : {}), search:'1' }).toString()}`)}>{disp}</button>
                 );
               })}
             </div>
@@ -430,7 +475,7 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
           </tr>
         </thead>
         <tbody>
-          {sorted.map((r)=> (
+          {doSearch ? sorted.map((r)=> (
             <React.Fragment key={r.code}>
             <tr>
               <td><a className="train-code" href="#" onClick={(e)=>{e.preventDefault(); setOpenDetail(p=>({ ...p, [r.code]: !p[r.code] }));}}>{r.code}</a></td>
@@ -468,10 +513,10 @@ const handleBookTransfer = (opt: { mid: string; a: Train; b: Train }) => {
               </tr>
             )}
             </React.Fragment>
-          ))}
+          )) : null}
           </tbody>
         </table>
-         <div className="hint">演示数据，仅用于界面展示。无票时会在此处显示候补入口。</div>
+         <div className="hint">{doSearch ? '演示数据，仅用于界面展示。无票时会在此处显示候补入口。' : '请设置出发地/目的地与日期后点击查询'}</div>
       {showTransfer && (
         <div style={{marginTop:24}}>
           <h3 style={{margin:'8px 0'}}>中转换乘候选</h3>

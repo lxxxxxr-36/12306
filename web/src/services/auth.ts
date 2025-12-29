@@ -40,6 +40,7 @@ function findUser(account: string): UserRecord | undefined {
   return u.find(x => x.username === account || x.email === account || x.phoneNumber === account);
 }
 export function getUserByUsername(username: string): UserRecord | undefined { return getUsers().find(x => x.username === username); }
+export function getUserByAccount(account: string): UserRecord | undefined { return findUser(account); }
 export async function updateUserInfo(username: string, patch: Partial<{ email: string; phoneCode: '+86' | '+852' | '+853' | '+886'; phoneNumber: string; benefit: BenefitType }>): Promise<{ok:boolean;message?:string}> {
   await new Promise(r=>setTimeout(r, 150));
   const users = getUsers();

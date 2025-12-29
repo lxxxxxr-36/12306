@@ -5,6 +5,7 @@
   background: url('/media/会员页背景.png') no-repeat center top;
   background-size: 100% auto; /* 覆盖全宽，保持长宽比 */
   min-height: 360px;
+  height: 340px;
   position: relative;
 }
 
@@ -16,39 +17,42 @@
   grid-template-columns: repeat(6, 1fr);
   align-items: center;
   min-height: 360px;
+  height: 340px;
 }
 
 .member-sidebar{
   grid-column: 2 / span 1; /* 接近左侧1/6位置 */
-  background: rgba(255,255,255,0.25);
+  background: linear-gradient(180deg, rgba(90,120,200,0.25), rgba(150,160,230,0.25));
   border-radius: 8px;
-  padding: 10px 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  padding: 8px 6px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: repeat(5, 1fr); /* 高度均分给五项 */
   transform: translateX(-220px);
   width: 140px;
+  height: 100%;
 }
-.member-item-row{ position: relative; height: 48px; display:flex; align-items:center; }
+.member-item-row{ position: relative; display:flex; align-items:center; }
 .member-link{ 
   background: transparent;
   color: #fff;
   border: none;
   text-align: center;
-  padding: 8px 0;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
   width: 100%;
+  height: 100%;
+  display:flex; align-items:center; justify-content:center;
 }
 .member-link:hover{ background: rgba(255,255,255,0.2); }
 .member-link.active{ background: rgba(46,165,255,0.6); }
 
-.hover-panel{ position: absolute; left: 150px; top: 8px; background: rgba(255,255,255,0.8); border-radius: 10px; padding: 10px 12px; display:flex; gap:16px; align-items:center; }
-.hover-item{ background: transparent; border:none; color:#555; cursor:pointer; padding:6px 8px; border-radius:6px; }
+.hover-panel{ position: absolute; left: 150px; top: 0; height: 100%; background: rgba(200,205,255,0.85); border-radius: 10px; padding: 0 16px; display:flex; gap:16px; align-items:center; white-space: nowrap; writing-mode: horizontal-tb; }
+.hover-item{ background: transparent; border:none; color:#fff; cursor:pointer; padding:6px 8px; border-radius:6px; white-space: nowrap; }
 .hover-item:hover{ background:#e6eefc; color:#2ea5ff; }
 .hover-item.disabled{ color:#666; cursor:default; }
-.hover-notch{ position:absolute; left:-10px; top:14px; width:0; height:0; border-top:10px solid transparent; border-bottom:10px solid transparent; border-right:10px solid rgba(255,255,255,0.8); }
+.hover-notch{ position:absolute; left:-10px; top:calc(50% - 10px); width:0; height:0; border-top:10px solid transparent; border-bottom:10px solid transparent; border-right:10px solid rgba(200,205,255,0.85); }
 
 .member-title{ 
   grid-column: 3 / span 3;

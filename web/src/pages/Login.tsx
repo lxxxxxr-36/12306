@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './login.css';
-import { validateLogin, setSession, createQrSession, getQrStatus, markQrScanned, markQrConfirmed } from '../services/auth';
+import { validateLogin, setSession, createQrSession, getQrStatus, markQrScanned, markQrConfirmed, requestPasswordReset, verifyResetCode, getUserByAccount } from '../services/auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const Login: React.FC = () => {
@@ -12,6 +12,10 @@ const Login: React.FC = () => {
   const [showPwd, setShowPwd] = useState(false);
   // 取消“记住用户名”功能
   const [error, setError] = useState<string>('');
+  const [showVerify, setShowVerify] = useState(false);
+  const [idLast4, setIdLast4] = useState('');
+  const [smsCode, setSmsCode] = useState('');
+  const [smsSent, setSmsSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,12 +25,7 @@ const Login: React.FC = () => {
       setError(result.message || '登录失败');
       return;
     }
-    // 记住用户名功能已取消
-    // 登录成功，设置会话并按来源跳转
-    setSession(username);
-    const s = location.state as unknown; let from = '/';
-    if (s && typeof s === 'object') { const f = (s as Record<string, unknown>).from; if (typeof f === 'string') from = f; }
-    navigate(from, { replace: true });
+    setShowVerify(true);
   };
 
   // ---- 扫码登录逻辑 ----
@@ -158,6 +157,64 @@ const Login: React.FC = () => {
           </div>
         </div>
       </div>
+      {showVerify && (
+        <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.35)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000}}>
+          <div style={{width:420, background:'#fff', borderRadius:8, boxShadow:'0 10px 20px rgba(0,0,0,0.2)'}}>
+            <div style={{padding:'12px 16px', borderBottom:'1px solid #eee', fontWeight:700, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+              <span>选择验证方式</span>
+              <button className="secondary" onClick={()=>setShowVerify(false)}>×</button>
+            </div>
+            <div style={{padding:'16px'}}>
+              <div style={{color:'#2b66e7', fontWeight:700, marginBottom:12}}>短信验证</div>
+              <div style={{display:'flex', flexDirection:'column', gap:12}}>
+                <input
+                  type="text"
+                  placeholder="请输入登录账号绑定的证件号后4位"
+                  value={idLast4}
+                  onChange={(e)=>setIdLast4(e.target.value.replace(/\\D/g,''))}
+                  maxLength={4}
+                  style={{border:'1px solid #dfe3eb', borderRadius:4, padding:'10px 12px'}}
+                />
+                <div style={{display:'flex', gap:8}}>
+                  <input
+                    type="text"
+                    placeholder="输入验证码"
+                    value={smsCode}
+                    onChange={(e)=>setSmsCode(e.target.value.replace(/\\D/g,''))}
+                    style={{flex:1, border:'1px solid #dfe3eb', borderRadius:4, padding:'10px 12px'}}
+                  />
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={idLast4.length!==4}
+                    onClick={async ()=>{
+                      const user = getUserByAccount(username);
+                      const last4 = (user?.idNo || '').slice(-4).replace(/\\s/g,'');
+                      if (!user) { alert('账号不存在'); return; }
+                      if (idLast4 !== (last4 || '')) { alert('证件号后4位不匹配'); return; }
+                      const r = await requestPasswordReset({ account: username });
+                      if (!r.ok) { alert(r.message || '发送失败'); return; }
+                      setSmsSent(true);
+                    }}
+                    style={{minWidth:120}}
+                  >{smsSent ? '重新发送' : '获取验证码'}</button>
+                </div>
+                <button
+                  className="primary"
+                  onClick={async ()=>{
+                    const v = await verifyResetCode({ account: username, code: smsCode });
+                    if (!v.ok) { alert(v.message || '验证码校验失败'); return; }
+                    setSession(username);
+                    const s = location.state as unknown; let from = '/';
+                    if (s && typeof s === 'object') { const f = (s as Record<string, unknown>).from; if (typeof f === 'string') from = f; }
+                    navigate(from, { replace: true });
+                  }}
+                >确定</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

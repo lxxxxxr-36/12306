@@ -43,11 +43,11 @@ export interface CreateStandbyPayload {
 export function createStandby(payload: CreateStandbyPayload): StandbyRequest {
   const id = Math.random().toString(36).slice(2);
   const now = Date.now();
-  const successAfter = 12_000 + Math.floor(Math.random() * 20_000); // 12s ~ 32s 之间随机成功
+  const successAfter = 12_000 + Math.floor(Math.random() * 20_000);
   const req: StandbyRequest = {
     id,
     ...payload,
-    status: 'matching',
+    status: 'submitted',
     createdAt: now,
     updatedAt: now,
     successTargetMs: now + successAfter,
@@ -73,6 +73,22 @@ export function cancelStandby(id: string){
     list[idx].updatedAt = Date.now();
     saveList(list);
   }
+}
+
+export function payStandby(id: string): StandbyRequest | undefined {
+  const list = loadList();
+  const idx = list.findIndex(s => s.id === id);
+  if (idx === -1) return undefined;
+  const now = Date.now();
+  const s = list[idx];
+  if (s.status !== 'submitted') return s;
+  s.status = 'matching';
+  s.updatedAt = now;
+  if (!s.successTargetMs) {
+    s.successTargetMs = now + (12_000 + Math.floor(Math.random() * 20_000));
+  }
+  saveList(list);
+  return s;
 }
 
 export function checkStandbyStatus(id: string): StandbyRequest | undefined {

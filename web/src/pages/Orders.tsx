@@ -1,12 +1,14 @@
 import React from 'react';
 import type { Order } from '../types/order';
 import { getOrders, cancelOrder, refundOrder, changeOrderDest, rescheduleOrderDate } from '../services/orders';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { popularCities } from '../constants/cities';
 
 const Orders: React.FC = () => {
   const [orders, setOrders] = React.useState<Order[]>([]);
   const navigate = useNavigate();
+  const { search } = useLocation();
+  const op = React.useMemo(() => new URLSearchParams(search).get('op'), [search]);
   React.useEffect(()=>{
     setOrders(getOrders());
     const handleOrdersChange = () => setOrders(getOrders());
@@ -73,6 +75,14 @@ const Orders: React.FC = () => {
   return (
     <div className="orders-page">
       <h2>订单中心</h2>
+      {op ? (
+        <div style={{margin:'8px 0', padding:'8px 12px', background:'#fff8e1', border:'1px solid #ffe082', borderRadius:4, color:'#8d6e63'}}>
+          {op === 'refund' ? '请在已支付订单中点击“退票”进行退票' :
+           op === 'reschedule' ? '请在符合条件的订单中点击“改签”并选择新的出发日期（每张票仅可改签一次；已变更到站的车票不可改签；开车前不足48小时仅可改签到票面日期当日或更早）' :
+           op === 'change_dest' ? '请在符合条件的订单中点击“变更到站”并选择新的到达地' :
+           '请选择需要操作的订单'}
+        </div>
+      ) : null}
       <table className="orders-table">
         <thead>
           <tr>
@@ -80,6 +90,7 @@ const Orders: React.FC = () => {
             <th>行程</th>
             <th>出发日期</th>
             <th>乘客</th>
+            <th>座位</th>
             <th>金额</th>
             <th>状态</th>
             <th>操作</th>
@@ -92,6 +103,7 @@ const Orders: React.FC = () => {
               <td>{o.origin} → {o.dest} · {o.item.trainCode}</td>
               <td>{o.date}</td>
               <td>{o.passengers.map(p=>p.name||'乘客').join('、')}</td>
+              <td>{o.item.carriage ? `${o.item.carriage}车厢 ${o.item.seatNo || ''}` : (o.item.seatNo || '--')}</td>
               <td>{o.item.price} 元</td>
               <td>{o.status}</td>
               <td>

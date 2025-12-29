@@ -45,7 +45,7 @@ const Membership: React.FC = () => {
                   onMouseEnter={()=>setHoverKey(t.key)}
                 >{t.label}</button>
                 {hoverKey===t.key && (
-                  <div className="hover-panel" style={{ top: idx*48 + 8 }}>
+                  <div className="hover-panel">
                     {t.key==='exclusive' ? (
                       <div className="hover-item disabled">敬请期待</div>
                     ) : (

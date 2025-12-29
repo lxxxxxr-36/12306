@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, NavLink, useNavigate } from 'react-router-dom';
 import { isLoggedIn } from '../services/auth';
-import { createStandby, checkStandbyStatus, cancelStandby } from '../services/standby';
+import { createStandby, checkStandbyStatus, cancelStandby, payStandby } from '../services/standby';
 import { fetchTrains } from '../services/trains';
 import { popularCities } from '../constants/cities';
 import type { SeatType } from '../types/train';
@@ -120,6 +120,11 @@ const Standby: React.FC = () => {
     cancelStandby(standbyId);
     setStatus('cancelled');
   };
+  const handlePay = () => {
+    if (!standbyId) return;
+    const s = payStandby(standbyId);
+    if (s) setStatus(s.status);
+  };
 
   return (
     <div style={{maxWidth: 900, margin: '24px auto', background:'#fff', padding: 16, border:'1px solid #eee'}}>
@@ -220,6 +225,7 @@ const Standby: React.FC = () => {
           <h3>候补申请已提交</h3>
           <div>编号：{standbyId}</div>
           <div>当前状态：{
+            status === 'submitted' ? '待支付' :
             status === 'matching' ? '匹配中' :
             status === 'success' ? '候补成功' :
             status === 'expired' ? '已过期' :
@@ -230,6 +236,7 @@ const Standby: React.FC = () => {
             <div style={{marginTop:8}}>已候补到席别：{matchedSeat ? seatLabels[matchedSeat] : '无'}</div>
           )}
           <div style={{marginTop:12}}>
+            {status === 'submitted' && <button className="primary" onClick={handlePay}>支付定金</button>}
             {status === 'matching' && <button className="link" onClick={handleCancel}>取消候补</button>}
             <NavLink to="/results" style={{marginLeft:12}}>返回查询结果</NavLink>
           </div>

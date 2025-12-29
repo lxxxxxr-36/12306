@@ -8,7 +8,7 @@ const NotFound: React.FC = () => {
       <p>抱歉，您访问的页面不存在或已搬家。</p>
       <div style={{marginTop:16}}>
         <NavLink to="/" style={{marginRight:12}}>返回首页</NavLink>
-        <NavLink to="/orders">我的订单</NavLink>
+        <NavLink to="/my/orders/train">我的订单</NavLink>
       </div>
     </div>
   );

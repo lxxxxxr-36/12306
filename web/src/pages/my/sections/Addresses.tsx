@@ -86,7 +86,7 @@ const Addresses: React.FC = () => {
   const saveForm = () => {
     setError('');
     if (!username) { setError('请先登录'); return; }
-    if (!province || !city || !district || !town || !area) { setError('请选择完整地址'); return; }
+    if (!province || !city || !district || !town) { setError('请选择省/市/区县与乡镇'); return; }
     if (!detail.trim()) { setError('请填写详细地址'); return; }
     if (!receiver || !/^[\u4e00-\u9fa5A-Za-z·\s]{2,30}$/.test(receiver)) { setError('收件人需为2-30位中文或字母'); return; }
     if (!/^\d{11}$/.test(phone)) { setError('手机号需为11位数字'); return; }

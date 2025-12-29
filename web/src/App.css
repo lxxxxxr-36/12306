@@ -1,4 +1,4 @@
-.site-header { background: #fff; border-bottom: 1px solid #eaeaea; }
+.site-header { background: #fff; }
 .site-header .wrap { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
 .site-header .logo { color: var(--brand); font-weight: bold; }
 .site-header .logo .logo-img { height: 48px; display: block; }
