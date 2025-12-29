@@ -1,12 +1,12 @@
 import React from 'react';
-import './results.css';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { fetchTrains, decrementInventory } from '../services/trains';
-import { isLoggedIn, getSession } from '../services/auth';
-import { addOrder } from '../services/orders';
-import type { Order } from '../types/order';
-import type { Train, SearchQuery } from '../types/train'
 import { popularCities } from '../constants/cities';
+import { getSession, isLoggedIn } from '../services/auth';
+import { addOrder } from '../services/orders';
+import { decrementInventory, fetchTrains } from '../services/trains';
+import type { Order } from '../types/order';
+import type { SearchQuery, Train } from '../types/train';
+import './results.css';
 
 
 // 数据由服务层基于城市对动态生成
@@ -143,35 +143,50 @@ import { popularCities } from '../constants/cities';
     fetchTrains(q).then(setData);
   }, [origin, dest, date, hs, stu, doSearch]);
 
-   // 计算中转换乘候选
-   React.useEffect(() => {
-     if (!showTransfer) { setTransferOptions([]); return; }
-     let cancelled = false;
-     async function calc() {
-       setLoadingTransfer(true);
-       const mids = popularCities.filter(c => c !== origin && c !== dest);
-       const out: Array<{ mid: string; a: Train; b: Train }> = [];
-       for (const mid of mids) {
-         const leg1 = await fetchTrains({ origin, dest: mid, date, hs, stu });
-         const leg2 = await fetchTrains({ origin: mid, dest, date, hs, stu });
-         for (const t1 of leg1.slice(0,3)) {
-           const t1Arr = timeToMinutes(t1.arrive);
-           const candidates2 = leg2.filter(t2 => timeToMinutes(t2.depart) >= t1Arr + 30);
-           if (candidates2.length) {
-             out.push({ mid, a: t1, b: candidates2[0] });
-             if (out.length >= 5) break;
-           }
-         }
-         if (out.length >= 5) break;
-       }
-       if (!cancelled) {
-         setTransferOptions(out);
-         setLoadingTransfer(false);
-       }
-     }
-     calc();
-     return () => { cancelled = true; };
-   }, [showTransfer, origin, dest, date, hs, stu]);
+  // 计算中转换乘候选
+  React.useEffect(() => {
+    if (!showTransfer) { setTransferOptions([]); return; }
+    let cancelled = false;
+    async function calc() {
+      setLoadingTransfer(true);
+      const mids = popularCities.filter(c => c !== origin && c !== dest);
+      const out: Array<{ mid: string; a: Train; b: Train }> = [];
+
+      let weightedResults: { w: number, a: Train, b: Train }[] = [];
+
+      for (const mid of mids) {
+        const leg1 = await fetchTrains({ origin, dest: mid, date, hs, stu });
+        const leg2 = await fetchTrains({ origin: mid, dest, date, hs, stu });
+        for (const t1 of leg1) {
+          const t1Arr = timeToMinutes(t1.arrive);
+          const candidates2 = leg2.filter(t2 => timeToMinutes(t2.depart) >= t1Arr + 30 && timeToMinutes(t2.depart) <= t1Arr + 180);
+          for (const t2 of candidates2) {
+            const w = (timeToMinutes(t1.arrive) - timeToMinutes(t1.depart)) + (timeToMinutes(t2.arrive) - timeToMinutes(t2.depart)) + (timeToMinutes(t2.depart) - t1Arr) * 3;
+            weightedResults.push({ w, a: t1, b: t2 });
+          }
+        }
+      }
+
+      weightedResults = weightedResults.sort((x, y) => x.w - y.w).slice(0, 200);
+      const byMid = new Map<string, typeof weightedResults>();
+      for (const result of weightedResults) {
+        if (!byMid.has(result.a.dest)) byMid.set(result.a.dest, []);
+        byMid.get(result.a.dest)!.push(result);
+      }
+      for (const results of byMid.values()) {
+        for (const result of results.slice(0, 3)) {
+          out.push({ mid: result.a.dest, a: result.a, b: result.b });
+        }
+      }
+
+      if (!cancelled) {
+        setTransferOptions(out);
+        setLoadingTransfer(false);
+      }
+    }
+    calc();
+    return () => { cancelled = true; };
+  }, [showTransfer, origin, dest, date, hs, stu]);
 
   const filtered = React.useMemo(() => {
     let dataSrc = [...data];
