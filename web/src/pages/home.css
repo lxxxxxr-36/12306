@@ -1,23 +1,24 @@
 :root{--brand:#0066cc;}
-.home-page{max-width:1100px;margin:24px auto;padding:0 16px}
-.home-shell{display:grid;grid-template-columns:145px 1fr;gap:0}
-.side-nav{display:flex;flex-direction:column;min-height:280px;background:linear-gradient(180deg,#1E6FCD,#2A87E5);border:1px solid #1E6FCD;border-right:none;border-radius:8px 0 0 8px;overflow:hidden}
+.home-page{position:relative;width:100%;margin:0;padding:24px 0;min-height:450px}
+.home-shell{position:relative;z-index:2;display:grid;grid-template-columns:145px 1fr;gap:0;max-width:1100px;margin:24px 0 0 150px;padding:0 16px}
+.side-nav{display:flex;flex-direction:column;min-height:280px;background:linear-gradient(180deg,#1E6FCD,#2A87E5);border-left:1px solid #1E6FCD;border-radius:8px 0 0 8px;overflow:hidden}
 .side-nav .nav-item{flex:1;display:flex;align-items:center;gap:10px;padding:16px 14px;color:#fff;border-top:1px solid rgba(255,255,255,0.2)}
 .side-nav .nav-item:first-child{border-top:none}
 .side-nav .nav-item.active{background:#fff;color:#1E88E5;border-left:4px solid #1E88E5}
 .side-nav .nav-item.active .nav-ico{color:#1E88E5}
 .nav-ico{color:#fff}
 .nav-text{font-weight:700}
-.banner{background:#eef6ff;border:1px solid #cfe2ff;border-radius:8px;padding:18px;margin-bottom:16px}
+.banner{box-sizing:border-box;position:relative;z-index:2;background:rgba(238,246,255,0.95);border:1px solid #cfe2ff;border-radius:8px;padding:18px;margin:0px 0px 16px 0px;max-width:500px;backdrop-filter:blur(5px)}
 .banner h2{margin:0;color:#1f4888}
-.search-card{background:#fff;border-radius:0 8px 8px 0;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:12px;width:420px;min-height:360px;position:relative;border:1px solid #eaeef5;border-left:none}
+.search-card{background:#fff;border-radius:0 8px 8px 0;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:12px;width:420px;min-height:360px;position:relative;border-right:1px solid #eaeef5}
 .search-card.connected{margin-left:0}
-.row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;overflow:hidden}
+.col{min-width:0;overflow:hidden}
 .form-row{display:flex;align-items:center;gap:12px;margin:8px 0}
 .label{width:84px;color:#333;text-align:right;padding-right:6px;display:inline-block}
 .form-row .field-wrap{flex:1}
 .col label{display:block;font-size:12px;color:#666;margin-bottom:4px}
-.col input{width:100%;padding:10px;border:1px solid #ccc;border-radius:4px}
+.col input{width:100%;padding:10px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box}
 .field-wrap{position:relative}
 .form-row .field-wrap{flex:0 0 260px;max-width:260px}
 .field-wrap input{width:100%;padding:6px 10px;border:1px solid #E0E0E0;height:32px;border-radius:6px;font-size:14px}

@@ -1,4 +1,4 @@
-.site-header { background: #fff; border-bottom: 1px solid #eaeaea; }
+.site-header { background: #fff; }
 .site-header .wrap { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
 .site-header .logo { color: var(--brand); font-weight: bold; }
 .site-header .logo .logo-img { height: 48px; display: block; }
@@ -25,7 +25,7 @@
 .divider { color: #999; margin: 0 8px; }
 .logout-link { background: transparent; border: none; color: #333; font-size: 14px; cursor: pointer; }
 
-main { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
+main { margin: 0px auto; }
 .site-footer { text-align: center; color: #666; padding: 24px 0; border-top: 1px solid #eaeaea; background: #fff; }
 
 /* 新增：主导航栏（位于“我的12306”下方） */
