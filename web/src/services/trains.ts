@@ -1,5 +1,5 @@
-import type { SearchQuery, Train, SeatType } from '../types/train';
-import { popularCities } from '../constants/cities';
+import { popularCities, popularCityCoordinates } from '../constants/cities';
+import type { SearchQuery, SeatType, Train } from '../types/train';
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
 function addMinutes(time: string, mins: number) {
@@ -15,8 +15,28 @@ let seq = 100;
 function genTrain(prefix: 'G' | 'D', origin: string, dest: string, departHour: number): Train {
   const code = `${prefix}${seq++}`;
   const depart = `${pad(departHour)}:${prefix === 'G' ? '00' : '15'}`;
-  const arrive = addMinutes(depart, prefix === 'G' ? 270 : 390); // 4.5h or 6.5h
-  const duration = prefix === 'G' ? '4h30m' : '6h30m';
+
+  const originCoords: { lat: number; lng: number } | undefined = popularCityCoordinates[origin];
+  const destCoords: { lat: number; lng: number } | undefined = popularCityCoordinates[dest];
+
+  let durationInMinutes: number;
+  if (originCoords && destCoords) {
+    const R = 6371; // km
+    const dLat = (destCoords.lat - originCoords.lat) * Math.PI / 180;
+    const dLng = (destCoords.lng - originCoords.lng) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(originCoords.lat * Math.PI / 180) * Math.cos(destCoords.lat * Math.PI / 180) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // km
+    const speed = prefix === 'G' ? 300 : 180; // km/h
+    durationInMinutes = Math.ceil((distance + 30) / speed * 60 / 15) * 15; // minutes, plus acceleration/deceleration buffer
+  } else {
+    durationInMinutes = prefix === 'G' ? 270 : 390; // default duration
+  }
+
+  const arrive = addMinutes(depart, durationInMinutes);
+  const duration = `${Math.floor(durationInMinutes / 60)}h${durationInMinutes % 60}m`;
   const types = prefix === 'G'
     ? { sw: 4, ydz: 12, edz: 60, wz: 0 }
     : { sw: 0, ydz: 0, edz: 50, wz: 8 };
